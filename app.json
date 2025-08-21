@@ -33,7 +33,9 @@
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
         }
-      ]
+      ],
+      "expo-llm-mediapipe",
+      "expo-sqlite"
     ],
     "experiments": {
       "typedRoutes": true
