@@ -6,7 +6,6 @@ export default function RootLayout() {
     <ThemedView style={{ flex: 1 }}>
       <Stack>
         <Stack.Screen name="(drawer)" options={{ headerShown: false }} />
-        <Stack.Screen name="models" options={{ title: 'Manage Models' }} />
         <Stack.Screen name="modal/downloader" options={{ presentation: 'modal', title: 'Downloading' }} />
       </Stack>
     </ThemedView>

@@ -1,11 +1,11 @@
 import { router, useLocalSearchParams } from 'expo-router';
+import { useEffect } from 'react';
 import { ActivityIndicator, Button, StyleSheet } from 'react-native';
 import { ThemedText } from '../../components/ThemedText';
 import { ThemedView } from '../../components/ThemedView';
 import { useThemeColor } from '../../hooks/useThemeColor';
-import useAppStore from '../../store/appStore';
-import { useEffect } from 'react';
 import { LLMServiceFactory } from '../../services/llm/LLMServiceFactory';
+import useAppStore from '../../store/appStore';
 
 export default function DownloaderModal() {
     const tint = useThemeColor({}, 'tint');
@@ -26,7 +26,7 @@ export default function DownloaderModal() {
             return;
         }
 
-        const [llmService, serviceError] = LLMServiceFactory.getService(modelState.backend);
+        const [llmService, serviceError] = LLMServiceFactory.getService(modelName!);
 
         if (serviceError) {
             setError(serviceError.message);

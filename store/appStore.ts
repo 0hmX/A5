@@ -1,6 +1,6 @@
 import MODELS from '@/constants/Models';
 import { create } from 'zustand';
-import { AppStatus, ModelState, ModelStatus } from './types';
+import { AppStatus, ChatMessage, ModelState, ModelStatus } from './types';
 
 interface AppState {
     appStatus: AppStatus;
@@ -8,6 +8,7 @@ interface AppState {
     models: Record<string, ModelState>;
     activeModel: string | null;
     progress: number;
+    chatHistory: Record<string, ChatMessage[]>;
     setAppStatus: (status: AppStatus) => void;
     setError: (message: string) => void;
     clearError: () => void;
@@ -15,6 +16,7 @@ interface AppState {
     setActiveModel: (name: string) => void;
     setModelStatus: (name: string, status: ModelStatus) => void;
     setProgress: (progress: number) => void;
+    addChatMessage: (modelName: string, message: ChatMessage) => void;
 }
 
 const useAppStore = create<AppState>((set) => ({
@@ -23,6 +25,7 @@ const useAppStore = create<AppState>((set) => ({
     models: {},
     activeModel: null,
     progress: 0,
+    chatHistory: {},
     setAppStatus: (status: AppStatus) => set({ appStatus: status, errorMessage: null }),
     setError: (message: string) => set({ errorMessage: message, appStatus: 'ERROR' }),
     clearError: () => set({ errorMessage: null }),
@@ -33,7 +36,6 @@ const useAppStore = create<AppState>((set) => ({
                 initialModels[model.name] = {
                     model,
                     status: 'not_downloaded',
-                    backend: backend.name,
                 };
             });
         });
@@ -48,6 +50,13 @@ const useAppStore = create<AppState>((set) => ({
             },
         })),
     setProgress: (progress: number) => set({ progress }),
+    addChatMessage: (modelName: string, message: ChatMessage) =>
+        set((state) => ({
+            chatHistory: {
+                ...state.chatHistory,
+                [modelName]: [...(state.chatHistory[modelName] || []), message],
+            },
+        })),
 }));
 
 export default useAppStore;

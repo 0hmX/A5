@@ -1,3 +1,4 @@
+// @ts-ignore
 import { DrawerContentScrollView } from '@react-navigation/drawer';
 import { Link } from 'expo-router';
 import { Drawer } from 'expo-router/drawer';
@@ -29,9 +30,20 @@ export default function DrawerLayout() {
   return (
     <Drawer drawerContent={() => <CustomDrawerContent />}>
       <Drawer.Screen
-        name="chat"
+        name="index"
         options={{
           title: 'Chat',
+          headerRight: () => (
+            <Link href="/models" asChild>
+              <Button title="Models" />
+            </Link>
+          ),
+        }}
+      />
+      <Drawer.Screen
+        name="models"
+        options={{
+          title: 'Model Management',
         }}
       />
     </Drawer>
