@@ -1,4 +1,4 @@
-import MODELS from '@/constants/Models';
+import MODELS, { Online } from '@/constants/Models';
 import ExpoLlmMediapipe, {
     NativeModuleSubscription,
 } from 'expo-llm-mediapipe';
@@ -103,7 +103,14 @@ export class MediaPipeLLMService implements LLMService {
         modelName: string,
         onProgress: (progress: number) => void
     ): Promise<[string, null] | [null, Error]> {
-        const model = MODELS.mediapipe.find((m) => m.name === modelName);
+        let model: Online | null = null;
+        for (const backend of MODELS) {
+            const foundModel = backend.models.find((m) => m.name === modelName);
+            if (foundModel && foundModel.type === 'online') {
+                model = foundModel;
+                break;
+            }
+        }
 
         if (!model || !model.links) {
             return [null, new Error('Invalid model name or missing link.')];

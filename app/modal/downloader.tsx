@@ -1,16 +1,16 @@
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
-import { useThemeColor } from '@/hooks/useThemeColor';
-import { MediaPipeLLMService } from '@/services/llm/MediaPipeLLMService';
-import useAppStore from '@/store/appStore';
 import { router, useLocalSearchParams } from 'expo-router';
-import { useEffect } from 'react';
 import { ActivityIndicator, Button, StyleSheet } from 'react-native';
+import { ThemedText } from '../../components/ThemedText';
+import { ThemedView } from '../../components/ThemedView';
+import { useThemeColor } from '../../hooks/useThemeColor';
+import useAppStore from '../../store/appStore';
+import { useEffect } from 'react';
+import { LLMServiceFactory } from '../../services/llm/LLMServiceFactory';
 
 export default function DownloaderModal() {
     const tint = useThemeColor({}, 'tint');
     const { modelName } = useLocalSearchParams<{ modelName: string }>();
-    const { setModelStatus, setProgress, progress, setError } = useAppStore();
+    const { models, setModelStatus, setProgress, progress, setError } = useAppStore();
 
     useEffect(() => {
         if (!modelName) {
@@ -19,7 +19,20 @@ export default function DownloaderModal() {
             return;
         }
 
-        const llmService = new MediaPipeLLMService();
+        const modelState = models[modelName];
+        if (!modelState) {
+            setError(`Model '${modelName}' not found.`);
+            router.back();
+            return;
+        }
+
+        const [llmService, serviceError] = LLMServiceFactory.getService(modelState.backend);
+
+        if (serviceError) {
+            setError(serviceError.message);
+            router.back();
+            return;
+        }
 
         const download = async () => {
             setModelStatus(modelName, 'downloading');
@@ -37,7 +50,7 @@ export default function DownloaderModal() {
         };
 
         download();
-    }, [modelName, setModelStatus, setProgress, setError]);
+    }, [modelName, models, setModelStatus, setProgress, setError]);
 
     return (
         <ThemedView style={styles.container}>
@@ -63,3 +76,4 @@ const styles = StyleSheet.create({
         marginVertical: 20,
     },
 });
+

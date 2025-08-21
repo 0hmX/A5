@@ -1,6 +1,6 @@
 import MODELS from '@/constants/Models';
 import { create } from 'zustand';
-import { AppStatus, Model, ModelState, ModelStatus } from './types';
+import { AppStatus, ModelState, ModelStatus } from './types';
 
 interface AppState {
     appStatus: AppStatus;
@@ -28,11 +28,14 @@ const useAppStore = create<AppState>((set) => ({
     clearError: () => set({ errorMessage: null }),
     initializeModels: () => {
         const initialModels: Record<string, ModelState> = {};
-        MODELS.mediapipe.forEach((model) => {
-            initialModels[model.name] = {
-                model: model as Model,
-                status: 'not_downloaded', 
-            };
+        MODELS.forEach((backend) => {
+            backend.models.forEach((model) => {
+                initialModels[model.name] = {
+                    model,
+                    status: 'not_downloaded',
+                    backend: backend.name,
+                };
+            });
         });
         set({ models: initialModels });
     },
@@ -48,3 +51,4 @@ const useAppStore = create<AppState>((set) => ({
 }));
 
 export default useAppStore;
+

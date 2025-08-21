@@ -35,11 +35,14 @@ export default function ModelManagementScreen() {
         <ThemedView style={styles.container}>
             <ThemedText style={styles.header}>Downloaded Models</ThemedText>
             {downloadedModels.length > 0 ? (
-                downloadedModels.map(({ model }) => (
+                downloadedModels.map(({ model, backend }) => (
                     <View key={model.name} style={styles.downloadItem}>
-                        <ThemedText style={styles.modelItem}>
-                            {model.name} {activeModel === model.name ? '(Active)' : ''}
-                        </ThemedText>
+                        <View>
+                            <ThemedText style={styles.modelItem}>
+                                {model.name} {activeModel === model.name ? '(Active)' : ''}
+                            </ThemedText>
+                            <ThemedText style={styles.backendText}>{backend}</ThemedText>
+                        </View>
                         {activeModel !== model.name && (
                             <Button
                                 title="Set Active"
@@ -54,10 +57,13 @@ export default function ModelManagementScreen() {
             )}
 
             <ThemedText style={styles.header}>Available for Download</ThemedText>
-            {availableModels.map(({ model, status }) => (
+            {availableModels.map(({ model, status, backend }) => (
                 <View key={model.name} style={styles.downloadItem}>
-                    <ThemedText>{model.name}</ThemedText>
-                    {status === 'not_downloaded' && (
+                    <View>
+                        <ThemedText>{model.name}</ThemedText>
+                        <ThemedText style={styles.backendText}>{backend}</ThemedText>
+                    </View>
+                    {status === 'not_downloaded' && model.type === 'online' && (
                         <Link
                             href={{
                                 pathname: '/modal/downloader',
@@ -90,6 +96,10 @@ const styles = StyleSheet.create({
     },
     modelItem: {
         fontSize: 16,
+    },
+    backendText: {
+        fontSize: 12,
+        color: '#888',
     },
     downloadItem: {
         flexDirection: 'row',

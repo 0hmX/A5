@@ -1,19 +1,38 @@
+
+export type Backends = {
+    name: string,
+    models: Models[]
+}
+
+export type Online = {
+    type: "online",
+    links: string,
+    name: string
+}
+
+export type Ofline = {
+    type: "ofline",
+    name: string,
+    path: string
+}
+
+export type Models = Online | Ofline
+
 /*
  * name are globally unique 
 */
-const MODELS = {
-    "mediapipe": [
-        {
-            name: "google-geini-120t",
-            type: "online",
-            links: "https://drive.google.com/file/d/1Z9EU25pTo1ruSYDB3Lg_ppQEP9sUQace/view?usp=sharing"
-        },
-        {
-            name: "google-geini-120t-in8",
-            type: "local",
-            path: "/google-geini-120-in8"
-        }
-    ]
-}
+const MODELS: Backends[] = [
+    {
+        name: "google/mediapipe",
+        models: [
+            {
+                name: "google/gemini-2",
+                links: "https://",
+                type: "online"
+            }
+        ]
+    }
+]
+
 
 export default MODELS
