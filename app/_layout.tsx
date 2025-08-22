@@ -1,5 +1,5 @@
-import 'react-native-get-random-values';
 import { Stack } from 'expo-router';
+import 'react-native-get-random-values';
 import { ThemedView } from '../components/ThemedView';
 
 export default function RootLayout() {
@@ -7,7 +7,6 @@ export default function RootLayout() {
     <ThemedView style={{ flex: 1 }}>
       <Stack>
         <Stack.Screen name="(drawer)" options={{ headerShown: false }} />
-        <Stack.Screen name="modal/downloader" options={{ presentation: 'modal', title: 'Downloading' }} />
       </Stack>
     </ThemedView>
   );

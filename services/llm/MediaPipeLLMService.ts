@@ -21,8 +21,10 @@ export class MediaPipeLLMService implements LLMService {
             if (this.modelHandle !== null) {
                 await this.unloadModel();
             }
+            const sanitizedModelName = modelName.replace(/\//g, '-');
+            console.log(`MediaPipeLLMService: Loading model ${sanitizedModelName}`);
             const handle = await ExpoLlmMediapipe.createModelFromDownloaded(
-                modelName,
+                sanitizedModelName,
                 options.maxTokens,
                 options.topK,
                 options.temperature,
@@ -31,6 +33,7 @@ export class MediaPipeLLMService implements LLMService {
             this.modelHandle = handle;
             return [undefined, null];
         } catch (e: any) {
+            console.log(`MediaPipeLLMService: Error loading model ${modelName}: ${e.message}`);
             return [null, e];
         }
     }
@@ -103,6 +106,7 @@ export class MediaPipeLLMService implements LLMService {
         modelName: string,
         onProgress: (progress: number) => void
     ): Promise<[string, null] | [null, Error]> {
+        console.log(`MediaPipeLLMService: Downloading model ${modelName}`);
         let model: Online | null = null;
         for (const backend of MODELS) {
             const foundModel = backend.models.find((m) => m.name === modelName);
@@ -113,9 +117,12 @@ export class MediaPipeLLMService implements LLMService {
         }
 
         if (!model || !model.links) {
+            console.log(`MediaPipeLLMService: Invalid model name or missing link for ${modelName}`);
             return [null, new Error('Invalid model name or missing link.')];
         }
         const url = model.links;
+        const sanitizedModelName = modelName.replace(/\//g, '-');
+        console.log(`MediaPipeLLMService: Sanitized model name to ${sanitizedModelName}`);
 
         return new Promise((resolve) => {
             let subscription: NativeModuleSubscription | null = null;
@@ -130,16 +137,20 @@ export class MediaPipeLLMService implements LLMService {
             subscription = ExpoLlmMediapipe.addListener(
                 'downloadProgress',
                 (event) => {
-                    if (event.modelName === modelName) {
+                    if (event.modelName === sanitizedModelName) {
                         if (event.status === 'downloading' && event.progress !== undefined) {
+                            console.log(`MediaPipeLLMService: Download progress for ${sanitizedModelName}: ${event.progress}`);
                             onProgress(event.progress);
                         } else if (event.status === 'completed') {
+                            console.log(`MediaPipeLLMService: Download completed for ${sanitizedModelName}`);
                             cleanup();
                             resolve([modelName, null]);
                         } else if (event.status === 'error') {
+                            console.log(`MediaPipeLLMService: Download error for ${sanitizedModelName}: ${event.error}`);
                             cleanup();
                             resolve([null, new Error(event.error || 'Download failed.')]);
                         } else if (event.status === 'cancelled') {
+                            console.log(`MediaPipeLLMService: Download cancelled for ${sanitizedModelName}`);
                             cleanup();
                             resolve([null, new Error('Download cancelled.')]);
                         }
@@ -147,8 +158,9 @@ export class MediaPipeLLMService implements LLMService {
                 }
             );
 
-            ExpoLlmMediapipe.downloadModel(url, modelName, { overwrite: true }).catch(
+            ExpoLlmMediapipe.downloadModel(url, sanitizedModelName, { overwrite: true }).catch(
                 (e: any) => {
+                    console.log(`MediaPipeLLMService: Error downloading model ${sanitizedModelName}: ${e.message}`);
                     cleanup();
                     resolve([null, e]);
                 }

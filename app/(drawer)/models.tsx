@@ -1,9 +1,10 @@
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { useTheme } from '@/hooks/useTheme';
+import { LLMServiceFactory } from '@/services/llm/LLMServiceFactory';
 import useAppStore from '@/store/appStore';
 import { ModelState } from '@/store/types';
-import { Link } from 'expo-router';
+import ExpoLlmMediapipe from 'expo-llm-mediapipe';
 import { useEffect } from 'react';
 import { Button, SectionList, StyleSheet, View } from 'react-native';
 
@@ -11,10 +12,12 @@ interface ModelItemProps {
   item: ModelState;
   isActive: boolean;
   onSetActive: (name: string) => void;
+  onDownload: (name: string) => void;
+  onDelete: (name: string) => void;
   progress: number;
 }
 
-const ModelItem: React.FC<ModelItemProps> = ({ item, isActive, onSetActive, progress }) => {
+const ModelItem: React.FC<ModelItemProps> = ({ item, isActive, onSetActive, onDownload, onDelete, progress }) => {
   const colors = useTheme();
 
   return (
@@ -25,15 +28,19 @@ const ModelItem: React.FC<ModelItemProps> = ({ item, isActive, onSetActive, prog
       </View>
       <View style={styles.modelActions}>
         {item.status === 'downloaded' && !isActive && (
-          <Button title="Set Active" color={colors.accent} onPress={() => onSetActive(item.model.name)} />
+          <>
+            <Button title="Set Active" color={colors.accent} onPress={() => onSetActive(item.model.name)} />
+            <Button title="Delete" color={colors.destructive} onPress={() => onDelete(item.model.name)} />
+          </>
         )}
         {item.status === 'downloaded' && isActive && (
-          <ThemedText style={[styles.activeText, { color: colors.accent }]}>Active</ThemedText>
+          <>
+            <ThemedText style={[styles.activeText, { color: colors.accent }]}>Active</ThemedText>
+            <Button title="Delete" color={colors.destructive} onPress={() => onDelete(item.model.name)} />
+          </>
         )}
         {item.status === 'not_downloaded' && (
-          <Link href={{ pathname: '/modal/downloader', params: { modelName: item.model.name } }} asChild>
-            <Button title="Download" color={colors.accent} />
-          </Link>
+          <Button title="Download" color={colors.accent} onPress={() => onDownload(item.model.name)} />
         )}
         {item.status === 'downloading' && (
           <ThemedText>Downloading... {progress.toFixed(2)}%</ThemedText>
@@ -44,20 +51,65 @@ const ModelItem: React.FC<ModelItemProps> = ({ item, isActive, onSetActive, prog
 };
 
 export default function ModelManagementScreen() {
+  console.log('ModelManagementScreen: Initialized');
   const {
     models,
     activeModel,
     progress,
     initializeModels,
     setActiveModel,
+    setModelStatus,
+    setProgress,
+    setError,
   } = useAppStore();
 
   useEffect(() => {
+    console.log('ModelManagementScreen: Initializing models');
     initializeModels();
   }, [initializeModels]);
 
   const handleSetActive = (name: string) => {
+    console.log(`ModelManagementScreen: Setting active model to ${name}`);
     setActiveModel(name);
+  };
+
+  const handleDownload = async (modelName: string) => {
+    console.log(`ModelManagementScreen: Starting download for ${modelName}`);
+    const [llmService, serviceError] = LLMServiceFactory.getService(modelName);
+
+    if (serviceError) {
+      console.log(`ModelManagementScreen: Service error: ${serviceError.message}`);
+      setError(serviceError.message);
+      return;
+    }
+
+    setModelStatus(modelName, 'downloading');
+    const [_, error] = await llmService.downloadModel(modelName, (p) => {
+      console.log(`ModelManagementScreen: Download progress for ${modelName}: ${p * 100}`);
+      setProgress(p * 100);
+    });
+
+    if (error) {
+      console.log(`ModelManagementScreen: Download error for ${modelName}: ${error.message}`);
+      setError(error.message);
+      setModelStatus(modelName, 'not_downloaded');
+    } else {
+      console.log(`ModelManagementScreen: Download successful for ${modelName}`);
+      setModelStatus(modelName, 'downloaded');
+    }
+  };
+
+  const handleDelete = async (modelName: string) => {
+    console.log(`ModelManagementScreen: Deleting model ${modelName}`);
+    const sanitizedModelName = modelName.replace(/\//g, '-');
+    try {
+      await ExpoLlmMediapipe.deleteDownloadedModel(sanitizedModelName);
+      setModelStatus(modelName, 'not_downloaded');
+      console.log(`ModelManagementScreen: Deleted model ${modelName}`);
+    } catch (e: any) {
+      console.log(`ModelManagementScreen: Error deleting model ${modelName}: ${e.message}`);
+      setError(e.message);
+    }
   };
 
   const sections = [
@@ -81,6 +133,8 @@ export default function ModelManagementScreen() {
             item={item}
             isActive={activeModel === item.model.name}
             onSetActive={handleSetActive}
+            onDownload={handleDownload}
+            onDelete={handleDelete}
             progress={progress}
           />
         )}
@@ -127,6 +181,8 @@ const styles = StyleSheet.create({
   },
   modelActions: {
     marginLeft: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   activeText: {
     fontWeight: 'bold',

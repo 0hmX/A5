@@ -1,4 +1,5 @@
 import MODELS from '@/constants/Models';
+import ExpoLlmMediapipe from 'expo-llm-mediapipe';
 import { create } from 'zustand';
 import { v4 as uuidv4 } from 'uuid';
 import { AppStatus, ChatMessage, ChatSession, ModelState, ModelStatus } from './types';
@@ -36,16 +37,21 @@ const useAppStore = create<AppState>((set, get) => ({
     setAppStatus: (status: AppStatus) => set({ appStatus: status, errorMessage: null }),
     setError: (message: string) => set({ errorMessage: message, appStatus: 'ERROR' }),
     clearError: () => set({ errorMessage: null }),
-    initializeModels: () => {
+    initializeModels: async () => {
+        console.log('AppStore: Initializing models');
         const initialModels: Record<string, ModelState> = {};
-        MODELS.forEach((backend) => {
-            backend.models.forEach((model) => {
+        for (const backend of MODELS) {
+            for (const model of backend.models) {
+                const sanitizedModelName = model.name.replace(/\//g, '-');
+                console.log(`AppStore: Checking if model ${sanitizedModelName} is downloaded`);
+                const isDownloaded = await ExpoLlmMediapipe.isModelDownloaded(sanitizedModelName);
+                console.log(`AppStore: Model ${sanitizedModelName} is ${isDownloaded ? 'downloaded' : 'not downloaded'}`);
                 initialModels[model.name] = {
                     model,
-                    status: 'not_downloaded',
+                    status: isDownloaded ? 'downloaded' : 'not_downloaded',
                 };
-            });
-        });
+            }
+        }
         set({ models: initialModels });
     },
     setActiveModel: (name: string) => set({ activeModel: name }),

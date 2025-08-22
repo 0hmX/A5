@@ -147,7 +147,6 @@ export default function ChatScreen() {
     return (
       <ThemedView style={styles.container}>
         <ThemedText>Model not downloaded.</ThemedText>
-        <Button title="Download Model" onPress={() => router.push(`/modal/downloader?modelName=${activeModel}`)} />
       </ThemedView>
     );
   }
