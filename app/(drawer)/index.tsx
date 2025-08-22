@@ -6,7 +6,7 @@ import useAppStore from '@/store/appStore';
 import { router } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Button, FlatList, StyleSheet, TextInput, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context'; // Import useSafeAreaInsets
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { v4 as uuidv4 } from 'uuid';
 
 export default function ChatScreen() {
@@ -90,6 +90,7 @@ export default function ChatScreen() {
 }), [theme, insets]); // Add insets to dependency array
 
   const [inputText, setInputText] = useState('');
+  const modelState = activeModel ? models[activeModel] : null;
 
   useEffect(() => {
     if (isDbInitialized) { // Only initialize if DB is ready
@@ -103,12 +104,46 @@ export default function ChatScreen() {
     console.log('ChatScreen: sessions', sessions);
   }, [activeSessionId, sessions]);
 
+  useEffect(() => {
+    const loadModel = async () => {
+      console.log('ChatScreen: loadModel useEffect triggered');
+      if (!activeModel || !modelState || modelState.status !== 'downloaded') {
+        console.log('ChatScreen: loadModel - Pre-conditions not met (activeModel, modelState, or status)');
+        return;
+      }
+
+      console.log('ChatScreen: loadModel - Setting appStatus to LOADING_MODEL');
+      setAppStatus('LOADING_MODEL');
+      const [llmService, serviceError] = LLMServiceFactory.getService(activeModel);
+
+      if (serviceError) {
+        console.error('ChatScreen: loadModel - Service error:', serviceError.message);
+        setError(serviceError.message);
+        setAppStatus('ERROR');
+        return;
+      }
+
+      console.log(`ChatScreen: loadModel - Calling llmService.loadModel for ${activeModel}`);
+      const [_, loadError] = await llmService.loadModel(activeModel, {}); // Pass empty options for now
+      if (loadError) {
+        console.error('ChatScreen: loadModel - Load error:', loadError.message);
+        setError(loadError.message);
+        setAppStatus('ERROR');
+        return;
+      }
+      console.log('ChatScreen: loadModel - Model loaded successfully, setting appStatus to IDLE');
+      setAppStatus('IDLE');
+    };
+    loadModel();
+  }, [activeModel, modelState, setAppStatus, setError]);
+
   const activeSession = sessions.find(s => s.id === activeSessionId);
   const messages = activeSession ? activeSession.history : [];
-  const modelState = activeModel ? models[activeModel] : null;
 
   const handleSend = async () => {
-    if (inputText.trim().length === 0 || !activeModel || !activeSessionId) {
+    console.log('ChatScreen: handleSend started');
+    if (inputText.trim().length === 0 || !activeModel || !activeSessionId || appStatus === 'LOADING_MODEL') {
+      console.log('ChatScreen: handleSend - Pre-conditions not met (empty input, no model/session, or loading)');
       return;
     }
 
@@ -119,21 +154,28 @@ export default function ChatScreen() {
       createdAt: new Date().toISOString(),
     };
 
+    console.log('ChatScreen: handleSend - Adding user message to session');
     addMessageToSession(activeSessionId, userMessage);
     setInputText('');
+    console.log('ChatScreen: handleSend - Setting appStatus to GENERATING');
     setAppStatus('GENERATING');
 
     const [llmService, serviceError] = LLMServiceFactory.getService(activeModel);
 
     if (serviceError) {
+      console.error('ChatScreen: handleSend - Service error:', serviceError.message);
       setError(serviceError.message);
+      setAppStatus('ERROR');
       return;
     }
 
+    console.log(`ChatScreen: handleSend - Calling llmService.generate for ${activeModel}`);
     const [response, responseError] = await llmService.generate(userMessage.content);
 
     if (responseError) {
+      console.error('ChatScreen: handleSend - Generate error:', responseError.message);
       setError(responseError.message);
+      setAppStatus('ERROR');
       return;
     }
 
@@ -144,7 +186,9 @@ export default function ChatScreen() {
       createdAt: new Date().toISOString(),
     };
 
+    console.log('ChatScreen: handleSend - Adding model message to session');
     addMessageToSession(activeSessionId, modelMessage);
+    console.log('ChatScreen: handleSend - Setting appStatus to IDLE');
     setAppStatus('IDLE');
   };
 
@@ -185,7 +229,7 @@ export default function ChatScreen() {
         )}
         style={styles.messageList}
       />
-      {appStatus === 'GENERATING' && <ActivityIndicator size="large" color={theme.accent} style={styles.loading} />}
+      {(appStatus === 'GENERATING' || appStatus === 'LOADING_MODEL') && <ActivityIndicator size="large" color={theme.accent} style={styles.loading} />}
       {appStatus === 'ERROR' && (
         <View style={styles.errorContainer}>
           <ThemedText style={styles.errorText}>{errorMessage}</ThemedText>
@@ -195,7 +239,7 @@ export default function ChatScreen() {
       <View style={styles.inputContainer}>
         <TextInput
           placeholder="Type your message..."
-          placeholderTextColor={theme.mutedForeground} // Use themed muted foreground
+          placeholderTextColor={theme.mutedForeground}
           style={styles.textInput}
           value={inputText}
           onChangeText={setInputText}

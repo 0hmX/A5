@@ -10,6 +10,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 function CustomDrawerContent() {
   const themeColors = useTheme();
+  console.log('CustomDrawerContent: themeColors:', themeColors);
   const { sessions, createNewSession, setActiveSession, activeSessionId } = useAppStore();
 
   const handleCreateNewSession = () => {
@@ -18,31 +19,41 @@ function CustomDrawerContent() {
     router.push('/');
   };
 
-  const renderHeader = () => (
-    <View>
-      <ThemedText style={styles.drawerHeader}>a5 chat</ThemedText>
-      <Button title="New Chat" color={themeColors.accent} onPress={handleCreateNewSession} />
-      <TextInput
-        placeholder="Search sessions..."
-        placeholderTextColor={themeColors.mutedForeground}
-        style={[styles.searchInput, { borderColor: themeColors.input, color: themeColors.text }]}
-      />
-    </View>
-  );
+  const renderHeader = () => {
+    console.log('CustomDrawerContent: renderHeader - themeColors.accent:', themeColors.accent);
+    console.log('CustomDrawerContent: renderHeader - themeColors.mutedForeground:', themeColors.mutedForeground);
+    console.log('CustomDrawerContent: renderHeader - themeColors.input:', themeColors.input);
+    console.log('CustomDrawerContent: renderHeader - themeColors.text:', themeColors.text);
+    return (
+      <View>
+        <ThemedText style={styles.drawerHeader}>a5 chat</ThemedText>
+        <Button title="New Chat" color={themeColors.accent} onPress={handleCreateNewSession} />
+        <TextInput
+          placeholder="Search sessions..."
+          placeholderTextColor={themeColors.mutedForeground}
+          style={[styles.searchInput, { borderColor: themeColors.input, color: themeColors.text }]}
+        />
+      </View>
+    );
+  };
 
   return (
-    <SafeAreaView style={{ flex: 1 }} edges={['top', 'bottom']}> {/* Apply safe area to top and bottom */}
+    <SafeAreaView style={{ flex: 1 }} edges={['top', 'bottom']}>
       <ThemedView style={{ flex: 1 }}>
         <FlatList
           data={sessions}
           keyExtractor={(item) => item.id}
-          renderItem={({ item }) => (
-            <ThemedView style={[styles.sessionItem, { borderBottomColor: themeColors.border }, item.id === activeSessionId && { backgroundColor: themeColors.accent }]}>
-              <Link href="/" asChild>
-                <ThemedText onPress={() => setActiveSession(item.id)}>{item.name}</ThemedText>
-              </Link>
-            </ThemedView>
-          )}
+          renderItem={({ item }) => {
+            console.log('CustomDrawerContent: renderItem - themeColors.border:', themeColors.border);
+            console.log('CustomDrawerContent: renderItem - themeColors.accent (activeSession):', themeColors.accent);
+            return (
+              <ThemedView style={[styles.sessionItem, { borderBottomColor: themeColors.border }, item.id === activeSessionId && { backgroundColor: themeColors.accent }]}>
+                <Link href="/" asChild>
+                  <ThemedText onPress={() => setActiveSession(item.id)}>{item.name}</ThemedText>
+                </Link>
+              </ThemedView>
+            );
+          }}
           ListHeaderComponent={renderHeader}
           contentContainerStyle={styles.scrollContainer}
         />

@@ -65,18 +65,23 @@ const useAppStore = create<AppState>((set, get) => ({
         })),
     setProgress: (progress: number) => set({ progress }),
     initializeSessions: async () => {
+        console.log('AppStore: initializeSessions started');
         const [allDbSessions, error] = await getAllSessions();
         if (error) {
+            console.error('AppStore: Error getting all sessions:', error.message);
             get().setError(error.message);
             return;
         }
+        console.log('AppStore: Got all sessions from DB:', allDbSessions);
 
         let chatSessions: ChatSession[] = [];
 
         if (allDbSessions.length === 0) {
+            console.log('AppStore: No sessions found, creating default session');
             const newSessionId = uuidv4();
             const [createdId, createError] = await createSession(newSessionId, 'Default Session');
             if (createError) {
+                console.error('AppStore: Error creating default session:', createError.message);
                 get().setError(createError.message);
                 return;
             }
@@ -88,10 +93,13 @@ const useAppStore = create<AppState>((set, get) => ({
                 history: [],
             };
             chatSessions.push(newSession);
+            console.log('AppStore: Default session created:', newSession);
         } else {
+            console.log('AppStore: Loading messages for existing sessions');
             for (const dbSession of allDbSessions) {
                 const [messages, messagesError] = await getMessagesForSession(dbSession.id);
                 if (messagesError) {
+                    console.error(`AppStore: Error getting messages for session ${dbSession.id}:`, messagesError.message);
                     get().setError(messagesError.message);
                     return;
                 }
@@ -99,9 +107,11 @@ const useAppStore = create<AppState>((set, get) => ({
                     ...dbSession,
                     history: messages,
                 });
+                console.log(`AppStore: Loaded ${messages.length} messages for session ${dbSession.id}`);
             }
         }
         set({ sessions: chatSessions, activeSessionId: chatSessions[0]?.id || null });
+        console.log('AppStore: initializeSessions finished. Sessions in store:', chatSessions);
     },
     createNewSession: async (): Promise<string | null> => {
         console.log('AppStore: createNewSession started');
