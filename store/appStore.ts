@@ -2,6 +2,7 @@ import MODELS from '@/constants/Models';
 import { create } from 'zustand';
 import { v4 as uuidv4 } from 'uuid';
 import { AppStatus, ChatMessage, ChatSession, ModelState, ModelStatus } from './types';
+import { createSession, getAllSessions, insertMessage, getMessagesForSession } from '../db/database';
 
 interface AppState {
     appStatus: AppStatus;
@@ -18,10 +19,10 @@ interface AppState {
     setActiveModel: (name: string) => void;
     setModelStatus: (name: string, status: ModelStatus) => void;
     setProgress: (progress: number) => void;
-    initializeSessions: () => void;
-    createNewSession: () => void;
+    initializeSessions: () => Promise<void>;
+    createNewSession: () => Promise<void>;
     setActiveSession: (sessionId: string) => void;
-    addMessageToSession: (sessionId: string, message: ChatMessage) => void;
+    addMessageToSession: (sessionId: string, message: ChatMessage) => Promise<void>;
 }
 
 const useAppStore = create<AppState>((set, get) => ({
@@ -56,26 +57,86 @@ const useAppStore = create<AppState>((set, get) => ({
             },
         })),
     setProgress: (progress: number) => set({ progress }),
-    initializeSessions: () => {
-        if (get().sessions.length === 0) {
+    initializeSessions: async () => {
+        const [allDbSessions, error] = await getAllSessions();
+        if (error) {
+            get().setError(error.message);
+            return;
+        }
+
+        let chatSessions: ChatSession[] = [];
+
+        if (allDbSessions.length === 0) {
+            const newSessionId = uuidv4();
+            const [createdId, createError] = await createSession(newSessionId, 'Default Session');
+            if (createError) {
+                get().setError(createError.message);
+                return;
+            }
             const newSession: ChatSession = {
-                id: uuidv4(),
+                id: createdId!,
                 name: 'Default Session',
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
                 history: [],
             };
-            set({ sessions: [newSession], activeSessionId: newSession.id });
+            chatSessions.push(newSession);
+        } else {
+            for (const dbSession of allDbSessions) {
+                const [messages, messagesError] = await getMessagesForSession(dbSession.id);
+                if (messagesError) {
+                    get().setError(messagesError.message);
+                    return;
+                }
+                chatSessions.push({
+                    ...dbSession,
+                    history: messages,
+                });
+            }
         }
+        set({ sessions: chatSessions, activeSessionId: chatSessions[0]?.id || null });
     },
-    createNewSession: () => {
+    createNewSession: async () => {
+        const newSessionId = uuidv4();
+        const newSessionName = `Session ${get().sessions.length + 1}`;
+        const [createdId, createError] = await createSession(newSessionId, newSessionName);
+        if (createError) {
+            get().setError(createError.message);
+            return;
+        }
         const newSession: ChatSession = {
-            id: uuidv4(),
-            name: `Session ${get().sessions.length + 1}`,
-            history: [],
+            id: createdId!,
+            name: newSessionName,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            history: [], // Add history back for in-memory state
         };
         set((state) => ({ sessions: [...state.sessions, newSession], activeSessionId: newSession.id }));
     },
-    setActiveSession: (sessionId: string) => set({ activeSessionId: sessionId }),
-    addMessageToSession: (sessionId: string, message: ChatMessage) => {
+    setActiveSession: (sessionId: string) => {
+        set({ activeSessionId: sessionId });
+        // Load messages for the newly active session
+        const sessionToActivate = get().sessions.find(s => s.id === sessionId);
+        if (sessionToActivate && !sessionToActivate.history.length) {
+            getMessagesForSession(sessionId).then(([messages, error]) => {
+                if (error) {
+                    get().setError(error.message);
+                    return;
+                }
+                set((state) => ({
+                    sessions: state.sessions.map(s =>
+                        s.id === sessionId ? { ...s, history: messages } : s
+                    )
+                }));
+            });
+        }
+    },
+    addMessageToSession: async (sessionId: string, message: ChatMessage) => {
+        const [insertedId, error] = await insertMessage(message.id, sessionId, message.role, message.content);
+        if (error) {
+            get().setError(error.message);
+            return;
+        }
         set((state) => ({
             sessions: state.sessions.map((session) =>
                 session.id === sessionId

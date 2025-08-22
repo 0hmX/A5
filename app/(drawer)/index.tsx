@@ -6,6 +6,7 @@ import useAppStore from '@/store/appStore';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Button, FlatList, StyleSheet, TextInput, View, ActivityIndicator } from 'react-native';
+import { v4 as uuidv4 } from 'uuid';
 
 export default function ChatScreen() {
   const tint = useThemeColor({}, 'tint');
@@ -39,9 +40,10 @@ export default function ChatScreen() {
     }
 
     const userMessage = {
-      id: Date.now().toString(),
+      id: uuidv4(),
       role: 'user' as const,
       content: inputText.trim(),
+      createdAt: new Date().toISOString(),
     };
 
     addMessageToSession(activeSessionId, userMessage);
@@ -63,9 +65,10 @@ export default function ChatScreen() {
     }
 
     const modelMessage = {
-      id: Date.now().toString(),
+      id: uuidv4(),
       role: 'model' as const,
       content: response,
+      createdAt: new Date().toISOString(),
     };
 
     addMessageToSession(activeSessionId, modelMessage);

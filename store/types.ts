@@ -23,5 +23,7 @@ export type ChatMessage = {
 export type ChatSession = {
     id: string;
     name: string;
+    createdAt: string;
+    updatedAt: string;
     history: ChatMessage[];
 };

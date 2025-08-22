@@ -1,15 +1,16 @@
 import * as SQLite from 'expo-sqlite';
 
 export type Session = {
-  id: number;
+  id: string;
   name: string;
   createdAt: string;
+  updatedAt: string;
 };
 
 export type Message = {
-  id: number;
-  sessionId: number;
-  role: 'user' | 'assistant';
+  id: string;
+  sessionId: string;
+  role: 'user' | 'model';
   content: string;
   createdAt: string;
 };
@@ -22,13 +23,14 @@ export const initDB = async (): Promise<[boolean, null] | [null, Error]> => {
     await db.execAsync(`
       PRAGMA journal_mode = WAL;
       CREATE TABLE IF NOT EXISTS sessions (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        id TEXT PRIMARY KEY,
         name TEXT NOT NULL,
-        createdAt TEXT DEFAULT (datetime('now', 'localtime'))
+        createdAt TEXT DEFAULT (datetime('now', 'localtime')),
+        updatedAt TEXT DEFAULT (datetime('now', 'localtime'))
       );
       CREATE TABLE IF NOT EXISTS messages (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        sessionId INTEGER NOT NULL,
+        id TEXT PRIMARY KEY,
+        sessionId TEXT NOT NULL,
         role TEXT NOT NULL CHECK(role IN ('user', 'assistant')),
         content TEXT NOT NULL,
         createdAt TEXT DEFAULT (datetime('now', 'localtime')),
@@ -50,16 +52,16 @@ export const getAllSessions = async (): Promise<[Session[], null] | [null, Error
   }
 };
 
-export const createSession = async (name: string): Promise<[number, null] | [null, Error]> => {
+export const createSession = async (id: string, name: string): Promise<[string, null] | [null, Error]> => {
   try {
-    const result = await db.runAsync('INSERT INTO sessions (name) VALUES (?);', name);
-    return [result.lastInsertRowId, null];
+    await db.runAsync('INSERT INTO sessions (id, name) VALUES (?, ?);', id, name);
+    return [id, null];
   } catch (error) {
     return [null, error as Error];
   }
 };
 
-export const getMessagesForSession = async (sessionId: number): Promise<[Message[], null] | [null, Error]> => {
+export const getMessagesForSession = async (sessionId: string): Promise<[Message[], null] | [null, Error]> => {
   try {
     const allRows = await db.getAllAsync<Message>(
       'SELECT * FROM messages WHERE sessionId = ? ORDER BY createdAt ASC;',
@@ -71,21 +73,22 @@ export const getMessagesForSession = async (sessionId: number): Promise<[Message
   }
 };
 
-export const insertMessage = async (sessionId: number, role: 'user' | 'assistant', content: string): Promise<[number, null] | [null, Error]> => {
+export const insertMessage = async (id: string, sessionId: string, role: 'user' | 'model', content: string): Promise<[string, null] | [null, Error]> => {
   try {
-    const result = await db.runAsync(
-      'INSERT INTO messages (sessionId, role, content) VALUES (?, ?, ?);',
+    await db.runAsync(
+      'INSERT INTO messages (id, sessionId, role, content) VALUES (?, ?, ?, ?);',
+      id,
       sessionId,
       role,
       content
     );
-    return [result.lastInsertRowId, null];
+    return [id, null];
   } catch (error) {
     return [null, error as Error];
   }
 };
 
-export const deleteSession = async (sessionId: number): Promise<[boolean, null] | [null, Error]> => {
+export const deleteSession = async (sessionId: string): Promise<[boolean, null] | [null, Error]> => {
   try {
     const result = await db.runAsync('DELETE FROM sessions WHERE id = ?;', sessionId);
     return [result.changes > 0, null];
