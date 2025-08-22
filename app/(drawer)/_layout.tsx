@@ -19,7 +19,7 @@ function CustomDrawerContent() {
   const renderHeader = () => (
     <View>
       <ThemedText style={styles.drawerHeader}>a5 chat</ThemedText>
-      <Button title="New Chat" color={themeColors.primary} onPress={handleCreateNewSession} />
+      <Button title="New Chat" color={themeColors.accent} onPress={handleCreateNewSession} />
       <TextInput
         placeholder="Search sessions..."
         placeholderTextColor={themeColors.mutedForeground}
