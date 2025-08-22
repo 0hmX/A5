@@ -12,17 +12,25 @@ export default function DownloaderModal() {
     const { modelName } = useLocalSearchParams<{ modelName: string }>();
     const { models, setModelStatus, setProgress, progress, setError } = useAppStore();
 
+    const handleNavigation = () => {
+        if (router.canGoBack()) {
+            router.back();
+        } else {
+            router.replace('/');
+        }
+    };
+
     useEffect(() => {
         if (!modelName) {
             setError('Model name not provided.');
-            router.back();
+            handleNavigation();
             return;
         }
 
         const modelState = models[modelName];
         if (!modelState) {
             setError(`Model '${modelName}' not found.`);
-            router.back();
+            handleNavigation();
             return;
         }
 
@@ -30,7 +38,7 @@ export default function DownloaderModal() {
 
         if (serviceError) {
             setError(serviceError.message);
-            router.back();
+            handleNavigation();
             return;
         }
 
@@ -46,7 +54,7 @@ export default function DownloaderModal() {
             } else {
                 setModelStatus(modelName, 'downloaded');
             }
-            router.back();
+            handleNavigation();
         };
 
         download();
@@ -57,7 +65,7 @@ export default function DownloaderModal() {
             <ThemedText style={styles.statusText}>Downloading {modelName}...</ThemedText>
             <ActivityIndicator size="large" color={color.tint} style={styles.progress} />
             <ThemedText>{progress.toFixed(2)}%</ThemedText>
-            <Button title="Cancel" color={color.destructive} onPress={() => router.back()} />
+            <Button title="Cancel" color={color.destructive} onPress={handleNavigation} />
         </ThemedView>
     );
 }
