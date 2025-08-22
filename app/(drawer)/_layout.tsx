@@ -5,7 +5,8 @@ import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { useTheme } from '@/hooks/useTheme';
 import useAppStore from '@/store/appStore';
-import { Button, FlatList, SafeAreaView, StyleSheet, TextInput, View } from 'react-native';
+import { Button, FlatList, StyleSheet, TextInput, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 function CustomDrawerContent() {
   const themeColors = useTheme();
@@ -30,7 +31,7 @@ function CustomDrawerContent() {
   );
 
   return (
-    <SafeAreaView style={{ flex: 1 }}>
+    <SafeAreaView style={{ flex: 1 }} edges={['top', 'bottom']}> {/* Apply safe area to top and bottom */}
       <ThemedView style={{ flex: 1 }}>
         <FlatList
           data={sessions}

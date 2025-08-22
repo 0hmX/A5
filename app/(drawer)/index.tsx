@@ -6,6 +6,7 @@ import useAppStore from '@/store/appStore';
 import { router } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Button, FlatList, StyleSheet, TextInput, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context'; // Import useSafeAreaInsets
 import { v4 as uuidv4 } from 'uuid';
 
 export default function ChatScreen() {
@@ -26,7 +27,8 @@ export default function ChatScreen() {
 
   console.log('ChatScreen: Rendering with activeSessionId:', activeSessionId);
 
-  const theme = useTheme()
+  const theme = useTheme();
+  const insets = useSafeAreaInsets(); // Get safe area insets
 
   const styles = useMemo(() => StyleSheet.create({
   container: {
@@ -60,6 +62,7 @@ export default function ChatScreen() {
     borderColor: theme.card,
     alignItems: 'center',
     width: '100%',
+    paddingBottom: insets.bottom, // Apply bottom inset
   },
   textInput: {
     flex: 1,
@@ -84,7 +87,7 @@ export default function ChatScreen() {
     color: theme.primaryForeground, // Use themed foreground color
     marginBottom: 5,
   },
-}), [theme]);
+}), [theme, insets]); // Add insets to dependency array
 
   const [inputText, setInputText] = useState('');
 
@@ -203,3 +206,4 @@ export default function ChatScreen() {
     </ThemedView>
   );
 }
+

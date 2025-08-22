@@ -3,10 +3,11 @@ import 'react-native-get-random-values';
 import { ThemedView } from '../components/ThemedView';
 import { useEffect } from 'react';
 import { initDB } from '../db/database';
-import useAppStore from '../store/appStore'; // Import useAppStore
+import useAppStore from '../store/appStore';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 export default function RootLayout() {
-  const { setDbInitialized } = useAppStore(); // Get setDbInitialized from store
+  const { setDbInitialized } = useAppStore();
 
   useEffect(() => {
     const initializeDatabase = async () => {
@@ -14,20 +15,22 @@ export default function RootLayout() {
       const [success, error] = await initDB();
       if (success) {
         console.log('RootLayout: Database initialized successfully.');
-        setDbInitialized(true); // Set db initialized to true
+        setDbInitialized(true);
       } else {
         console.error('RootLayout: Failed to initialize database:', error);
-        setDbInitialized(false); // Set db initialized to false on error
+        setDbInitialized(false);
       }
     };
     initializeDatabase();
-  }, [setDbInitialized]); // Add setDbInitialized to dependency array
+  }, [setDbInitialized]);
 
   return (
-    <ThemedView style={{ flex: 1 }}>
-      <Stack>
-        <Stack.Screen name="(drawer)" options={{ headerShown: false }} />
-      </Stack>
-    </ThemedView>
+    <SafeAreaProvider>
+      <ThemedView style={{ flex: 1 }}>
+        <Stack>
+          <Stack.Screen name="(drawer)" options={{ headerShown: false }} />
+        </Stack>
+      </ThemedView>
+    </SafeAreaProvider>
   );
 }
