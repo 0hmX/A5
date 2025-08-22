@@ -21,7 +21,10 @@ export default function ChatScreen() {
     setError,
     clearError,
     initializeSessions,
+    isDbInitialized, // Added
   } = useAppStore();
+
+  console.log('ChatScreen: Rendering with activeSessionId:', activeSessionId);
 
   const theme = useTheme()
 
@@ -86,8 +89,16 @@ export default function ChatScreen() {
   const [inputText, setInputText] = useState('');
 
   useEffect(() => {
-    initializeSessions();
-  }, [initializeSessions]);
+    if (isDbInitialized) { // Only initialize if DB is ready
+      console.log('ChatScreen: Initializing sessions');
+      initializeSessions();
+    }
+  }, [initializeSessions, isDbInitialized]); // Add isDbInitialized to dependency array
+
+  useEffect(() => {
+    console.log('ChatScreen: activeSessionId changed to', activeSessionId);
+    console.log('ChatScreen: sessions', sessions);
+  }, [activeSessionId, sessions]);
 
   const activeSession = sessions.find(s => s.id === activeSessionId);
   const messages = activeSession ? activeSession.history : [];

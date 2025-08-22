@@ -13,6 +13,7 @@ interface AppState {
     progress: number;
     sessions: ChatSession[];
     activeSessionId: string | null;
+    isDbInitialized: boolean; // Added
     setAppStatus: (status: AppStatus) => void;
     setError: (message: string) => void;
     clearError: () => void;
@@ -21,9 +22,10 @@ interface AppState {
     setModelStatus: (name: string, status: ModelStatus) => void;
     setProgress: (progress: number) => void;
     initializeSessions: () => Promise<void>;
-    createNewSession: () => Promise<void>;
+    createNewSession: () => Promise<string | null>;
     setActiveSession: (sessionId: string) => void;
     addMessageToSession: (sessionId: string, message: ChatMessage) => Promise<void>;
+    setDbInitialized: (initialized: boolean) => void; // Added
 }
 
 const useAppStore = create<AppState>((set, get) => ({
@@ -34,23 +36,22 @@ const useAppStore = create<AppState>((set, get) => ({
     progress: 0,
     sessions: [],
     activeSessionId: null,
+    isDbInitialized: false, // Added
     setAppStatus: (status: AppStatus) => set({ appStatus: status, errorMessage: null }),
     setError: (message: string) => set({ errorMessage: message, appStatus: 'ERROR' }),
     clearError: () => set({ errorMessage: null }),
     initializeModels: async () => {
         console.log('AppStore: Initializing models');
         const initialModels: Record<string, ModelState> = {};
-        for (const backend of MODELS) {
-            for (const model of backend.models) {
-                const sanitizedModelName = model.name.replace(/\//g, '-');
-                console.log(`AppStore: Checking if model ${sanitizedModelName} is downloaded`);
-                const isDownloaded = await ExpoLlmMediapipe.isModelDownloaded(sanitizedModelName);
-                console.log(`AppStore: Model ${sanitizedModelName} is ${isDownloaded ? 'downloaded' : 'not downloaded'}`);
-                initialModels[model.name] = {
-                    model,
-                    status: isDownloaded ? 'downloaded' : 'not_downloaded',
-                };
-            }
+        for (const model of MODELS) {
+            const sanitizedModelName = model.name.replace(/\//g, '-');
+            console.log(`AppStore: Checking if model ${sanitizedModelName} is downloaded`);
+            const isDownloaded = await ExpoLlmMediapipe.isModelDownloaded(sanitizedModelName);
+            console.log(`AppStore: Model ${sanitizedModelName} is ${isDownloaded ? 'downloaded' : 'not downloaded'}`);
+            initialModels[model.name] = {
+                model,
+                status: isDownloaded ? 'downloaded' : 'not_downloaded',
+            };
         }
         set({ models: initialModels });
     },
@@ -102,13 +103,15 @@ const useAppStore = create<AppState>((set, get) => ({
         }
         set({ sessions: chatSessions, activeSessionId: chatSessions[0]?.id || null });
     },
-    createNewSession: async () => {
+    createNewSession: async (): Promise<string | null> => {
+        console.log('AppStore: createNewSession started');
         const newSessionId = uuidv4();
         const newSessionName = `Session ${get().sessions.length + 1}`;
+        console.log(`AppStore: Creating session in DB with id: ${newSessionId}`);
         const [createdId, createError] = await createSession(newSessionId, newSessionName);
         if (createError) {
             get().setError(createError.message);
-            return;
+            return null;
         }
         const newSession: ChatSession = {
             id: createdId!,
@@ -117,7 +120,13 @@ const useAppStore = create<AppState>((set, get) => ({
             updatedAt: new Date().toISOString(),
             history: [], // Add history back for in-memory state
         };
-        set((state) => ({ sessions: [...state.sessions, newSession], activeSessionId: newSession.id }));
+        console.log('AppStore: Calling set state to add new session');
+        set((state) => {
+            console.log('AppStore: Inside set state, new activeSessionId will be:', newSession.id);
+            return { sessions: [...state.sessions, newSession], activeSessionId: newSession.id };
+        });
+        console.log('AppStore: createNewSession finished');
+        return newSession.id;
     },
     setActiveSession: (sessionId: string) => {
         set({ activeSessionId: sessionId });
@@ -151,6 +160,7 @@ const useAppStore = create<AppState>((set, get) => ({
             ),
         }));
     },
+    setDbInitialized: (initialized: boolean) => set({ isDbInitialized: initialized }), // Added
 }));
 
 export default useAppStore;

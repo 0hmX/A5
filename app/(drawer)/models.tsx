@@ -5,6 +5,7 @@ import { LLMServiceFactory } from '@/services/llm/LLMServiceFactory';
 import useAppStore from '@/store/appStore';
 import { ModelState } from '@/store/types';
 import ExpoLlmMediapipe from 'expo-llm-mediapipe';
+import { router } from "expo-router";
 import { useEffect } from 'react';
 import { Button, SectionList, StyleSheet, View } from 'react-native';
 
@@ -61,16 +62,28 @@ export default function ModelManagementScreen() {
     setModelStatus,
     setProgress,
     setError,
+    activeSessionId,
+    createNewSession,
   } = useAppStore();
 
   useEffect(() => {
     console.log('ModelManagementScreen: Initializing models');
     initializeModels();
-  }, [initializeModels]);
+  }, []);
 
-  const handleSetActive = (name: string) => {
+  const handleSetActive = async (name: string) => {
     console.log(`ModelManagementScreen: Setting active model to ${name}`);
     setActiveModel(name);
+    let sessionId = activeSessionId;
+    if (!sessionId) {
+      console.log('ModelManagementScreen: No active session, creating a new one');
+      sessionId = await createNewSession();
+      console.log('ModelManagementScreen: createNewSession() has completed with id:', sessionId);
+    }
+    if (sessionId) {
+      console.log('ModelManagementScreen: Navigating to / with sessionId:', sessionId);
+      router.push('/');
+    }
   };
 
   const handleDownload = async (modelName: string) => {

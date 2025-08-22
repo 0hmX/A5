@@ -12,8 +12,9 @@ function CustomDrawerContent() {
   const { sessions, createNewSession, setActiveSession, activeSessionId } = useAppStore();
 
   const handleCreateNewSession = () => {
+    console.log('CustomDrawerContent: Creating new session');
     createNewSession();
-    router.replace('/'); // Navigate to the chat screen
+    router.push('/');
   };
 
   const renderHeader = () => (

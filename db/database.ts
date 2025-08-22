@@ -19,7 +19,9 @@ let db: SQLite.SQLiteDatabase;
 
 export const initDB = async (): Promise<[boolean, null] | [null, Error]> => {
   try {
+    console.log('DB: Opening database...');
     db = await SQLite.openDatabaseAsync('main.db');
+    console.log('DB: Database opened. Executing schema...');
     await db.execAsync(`
       PRAGMA journal_mode = WAL;
       CREATE TABLE IF NOT EXISTS sessions (
@@ -31,14 +33,16 @@ export const initDB = async (): Promise<[boolean, null] | [null, Error]> => {
       CREATE TABLE IF NOT EXISTS messages (
         id TEXT PRIMARY KEY,
         sessionId TEXT NOT NULL,
-        role TEXT NOT NULL CHECK(role IN ('user', 'assistant')),
+        role TEXT NOT NULL CHECK(role IN ('user', 'model')),
         content TEXT NOT NULL,
         createdAt TEXT DEFAULT (datetime('now', 'localtime')),
         FOREIGN KEY (sessionId) REFERENCES sessions (id) ON DELETE CASCADE
       );
     `);
+    console.log('DB: Schema executed successfully.');
     return [true, null];
   } catch (error) {
+    console.error('DB: Error during initDB:', error);
     return [null, error as Error];
   }
 };
@@ -54,9 +58,12 @@ export const getAllSessions = async (): Promise<[Session[], null] | [null, Error
 
 export const createSession = async (id: string, name: string): Promise<[string, null] | [null, Error]> => {
   try {
+    console.log(`DB: Creating session with id: ${id}, name: ${name}`);
     await db.runAsync('INSERT INTO sessions (id, name) VALUES (?, ?);', id, name);
+    console.log(`DB: Session ${id} created successfully.`);
     return [id, null];
   } catch (error) {
+    console.error(`DB: Error creating session ${id}:`, error);
     return [null, error as Error];
   }
 };

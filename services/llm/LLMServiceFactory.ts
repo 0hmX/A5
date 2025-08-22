@@ -4,17 +4,17 @@ import MODELS from '../../constants/Models';
 
 export class LLMServiceFactory {
     static getService(modelName: string): [LLMService, null] | [null, Error] {
-        const backend = MODELS.find(backend => backend.models.some(model => model.name === modelName));
+        const model = MODELS.find(model => model.name === modelName);
 
-        if (!backend) {
+        if (!model) {
             return [null, new Error(`Unsupported model: ${modelName}`)];
         }
 
-        switch (backend.name) {
-            case 'google/mediapipe':
+        switch (model.backend) {
+            case 'mediapipe':
                 return [new MediaPipeLLMService(), null];
             default:
-                return [null, new Error(`Unsupported backend: ${backend.name}`)];
+                return [null, new Error(`Unsupported backend: ${model.backend}`)];
         }
     }
 }
