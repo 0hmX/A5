@@ -8,7 +8,7 @@ import { LLMServiceFactory } from '../../services/llm/LLMServiceFactory';
 import useAppStore from '../../store/appStore';
 
 export default function DownloaderModal() {
-    const { colors } = useTheme(); // Use the new useTheme hook
+    const color = useTheme(); // Use the new useTheme hook
     const { modelName } = useLocalSearchParams<{ modelName: string }>();
     const { models, setModelStatus, setProgress, progress, setError } = useAppStore();
 
@@ -55,9 +55,9 @@ export default function DownloaderModal() {
     return (
         <ThemedView style={styles.container}>
             <ThemedText style={styles.statusText}>Downloading {modelName}...</ThemedText>
-            <ActivityIndicator size="large" color={colors.tint} style={styles.progress} />
+            <ActivityIndicator size="large" color={color.tint} style={styles.progress} />
             <ThemedText>{progress.toFixed(2)}%</ThemedText>
-            <Button title="Cancel" color={colors.destructive} onPress={() => router.back()} />
+            <Button title="Cancel" color={color.destructive} onPress={() => router.back()} />
         </ThemedView>
     );
 }
