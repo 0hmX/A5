@@ -12,16 +12,21 @@ export default function DownloaderModal() {
     const { modelName } = useLocalSearchParams<{ modelName: string }>();
     const { models, setModelStatus, setProgress, progress, setError } = useAppStore();
 
+    console.log(`DownloaderModal: Initialized for model ${modelName}`);
+
     const handleNavigation = () => {
         if (router.canGoBack()) {
+            console.log('DownloaderModal: Navigating back');
             router.back();
         } else {
+            console.log('DownloaderModal: Replacing with home route');
             router.replace('/');
         }
     };
 
     useEffect(() => {
         if (!modelName) {
+            console.log('DownloaderModal: Model name not provided');
             setError('Model name not provided.');
             handleNavigation();
             return;
@@ -29,7 +34,14 @@ export default function DownloaderModal() {
 
         const modelState = models[modelName];
         if (!modelState) {
+            console.log(`DownloaderModal: Model '${modelName}' not found`);
             setError(`Model '${modelName}' not found.`);
+            handleNavigation();
+            return;
+        }
+
+        if (modelState.status === 'downloading' || modelState.status === 'downloaded') {
+            console.log(`DownloaderModal: Model already downloaded or downloading`);
             handleNavigation();
             return;
         }
@@ -37,21 +49,26 @@ export default function DownloaderModal() {
         const [llmService, serviceError] = LLMServiceFactory.getService(modelName!);
 
         if (serviceError) {
+            console.log(`DownloaderModal: Service error: ${serviceError.message}`);
             setError(serviceError.message);
             handleNavigation();
             return;
         }
 
         const download = async () => {
+            console.log(`DownloaderModal: Starting download for ${modelName}`);
             setModelStatus(modelName, 'downloading');
             const [_, error] = await llmService.downloadModel(modelName, (p) => {
+                console.log(`DownloaderModal: Download progress: ${p * 100}`);
                 setProgress(p * 100);
             });
 
             if (error) {
+                console.log(`DownloaderModal: Download error: ${error.message}`);
                 setError(error.message);
                 setModelStatus(modelName, 'not_downloaded');
             } else {
+                console.log(`DownloaderModal: Download successful for ${modelName}`);
                 setModelStatus(modelName, 'downloaded');
             }
             handleNavigation();

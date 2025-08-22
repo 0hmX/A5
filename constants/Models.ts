@@ -27,7 +27,7 @@ const MODELS: Backends[] = [
         models: [
             {
                 name: "google/gemini-2",
-                links: "https://",
+                links: "https://huggingface.co/cu8code/mediapipe/resolve/main/gemma3-1b-it-int4.task",
                 type: "online"
             }
         ]
