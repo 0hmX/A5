@@ -19,3 +19,9 @@ export type ChatMessage = {
     role: 'user' | 'model';
     content: string;
 };
+
+export type ChatSession = {
+    id: string;
+    name: string;
+    history: ChatMessage[];
+};

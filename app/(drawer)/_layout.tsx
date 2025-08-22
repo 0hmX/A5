@@ -1,27 +1,51 @@
-// @ts-ignore
-import { DrawerContentScrollView } from '@react-navigation/drawer';
-import { Link } from 'expo-router';
+import { Link, router } from 'expo-router';
 import { Drawer } from 'expo-router/drawer';
 
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { useThemeColor } from '@/hooks/useThemeColor';
-import { Button, StyleSheet } from 'react-native';
+import useAppStore from '@/store/appStore';
+import { Button, FlatList, StyleSheet, TextInput, View } from 'react-native';
 
 function CustomDrawerContent() {
-  const tint = useThemeColor({},'tint');
+  const tint = useThemeColor({}, 'tint');
+  const { sessions, createNewSession, setActiveSession, activeSessionId } = useAppStore();
+
+  const handleCreateNewSession = () => {
+    createNewSession();
+    router.replace('/'); // Navigate to the chat screen
+  };
+
+  const renderHeader = () => (
+    <View>
+      <ThemedText style={styles.drawerHeader}>a5 chat</ThemedText>
+      <Button title="New Chat" color={tint} onPress={handleCreateNewSession} />
+      <TextInput placeholder="Search sessions..." placeholderTextColor="#999" style={styles.searchInput} />
+    </View>
+  );
+
+  const renderFooter = () => (
+    <Link href="/models" asChild>
+      <Button title="Manage Models" color={tint} />
+    </Link>
+  );
 
   return (
     <ThemedView style={{ flex: 1 }}>
-      <DrawerContentScrollView>
-        <ThemedText style={styles.drawerHeader}>Sessions</ThemedText>
-        <Button title="Start New Chat" color={tint} onPress={() => {}} />
-        <ThemedText style={styles.sessionItem}>Session 1</ThemedText>
-        <ThemedText style={styles.sessionItem}>Session 2</ThemedText>
-      </DrawerContentScrollView>
-      <Link href="/models" asChild>
-        <Button title="Manage Models" color={tint} />
-      </Link>
+      <FlatList
+        data={sessions}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => (
+          <ThemedView style={[styles.sessionItem, item.id === activeSessionId && styles.activeSession]}>
+            <Link href="/" asChild>
+              <ThemedText onPress={() => setActiveSession(item.id)}>{item.name}</ThemedText>
+            </Link>
+          </ThemedView>
+        )}
+        ListHeaderComponent={renderHeader}
+        ListFooterComponent={renderFooter}
+        contentContainerStyle={styles.scrollContainer}
+      />
     </ThemedView>
   );
 }
@@ -55,12 +79,26 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     padding: 16,
+    textAlign: 'center',
+  },
+  searchInput: {
+    margin: 16,
+    padding: 10,
+    borderRadius: 5,
+    borderWidth: 1,
+    borderColor: '#555',
+    color: '#fff',
   },
   sessionItem: {
     paddingVertical: 12,
     paddingHorizontal: 16,
-    fontSize: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#333',
+  },
+  activeSession: {
+    backgroundColor: '#333',
+  },
+  scrollContainer: {
+    paddingBottom: 20, // Add some padding at the bottom
   },
 });

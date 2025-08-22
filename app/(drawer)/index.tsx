@@ -12,22 +12,29 @@ export default function ChatScreen() {
   const {
     activeModel,
     models,
-    chatHistory,
-    addChatMessage,
+    sessions,
+    activeSessionId,
+    addMessageToSession,
     appStatus,
     setAppStatus,
     errorMessage,
     setError,
     clearError,
+    initializeSessions,
   } = useAppStore();
 
   const [inputText, setInputText] = useState('');
 
-  const messages = activeModel ? chatHistory[activeModel] || [] : [];
+  useEffect(() => {
+    initializeSessions();
+  }, [initializeSessions]);
+
+  const activeSession = sessions.find(s => s.id === activeSessionId);
+  const messages = activeSession ? activeSession.history : [];
   const modelState = activeModel ? models[activeModel] : null;
 
   const handleSend = async () => {
-    if (inputText.trim().length === 0 || !activeModel) {
+    if (inputText.trim().length === 0 || !activeModel || !activeSessionId) {
       return;
     }
 
@@ -37,7 +44,7 @@ export default function ChatScreen() {
       content: inputText.trim(),
     };
 
-    addChatMessage(activeModel, userMessage);
+    addMessageToSession(activeSessionId, userMessage);
     setInputText('');
     setAppStatus('GENERATING');
 
@@ -61,7 +68,7 @@ export default function ChatScreen() {
       content: response,
     };
 
-    addChatMessage(activeModel, modelMessage);
+    addMessageToSession(activeSessionId, modelMessage);
     setAppStatus('IDLE');
   };
 
@@ -69,6 +76,7 @@ export default function ChatScreen() {
     return (
       <ThemedView style={styles.container}>
         <ThemedText>Please select a model to start chatting.</ThemedText>
+        <Button title="Select Model" onPress={() => router.push('/models')} />
       </ThemedView>
     );
   }
@@ -79,6 +87,14 @@ export default function ChatScreen() {
         <ThemedText>Model not downloaded.</ThemedText>
         <Button title="Download Model" onPress={() => router.push(`/modal/downloader?modelName=${activeModel}`)} />
       </ThemedView>
+    );
+  }
+
+  if (!activeSession) {
+    return (
+        <ThemedView style={styles.container}>
+            <ThemedText>Please select a session to start chatting.</ThemedText>
+        </ThemedView>
     );
   }
 
