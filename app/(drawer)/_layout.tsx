@@ -3,12 +3,12 @@ import { Drawer } from 'expo-router/drawer';
 
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
-import { useThemeColor } from '@/hooks/useThemeColor';
+import { useTheme } from '@/hooks/useTheme';
 import useAppStore from '@/store/appStore';
 import { Button, FlatList, StyleSheet, TextInput, View } from 'react-native';
 
 function CustomDrawerContent() {
-  const tint = useThemeColor({}, 'tint');
+  const themeColors = useTheme();
   const { sessions, createNewSession, setActiveSession, activeSessionId } = useAppStore();
 
   const handleCreateNewSession = () => {
@@ -19,14 +19,18 @@ function CustomDrawerContent() {
   const renderHeader = () => (
     <View>
       <ThemedText style={styles.drawerHeader}>a5 chat</ThemedText>
-      <Button title="New Chat" color={tint} onPress={handleCreateNewSession} />
-      <TextInput placeholder="Search sessions..." placeholderTextColor="#999" style={styles.searchInput} />
+      <Button title="New Chat" color={themeColors.primary} onPress={handleCreateNewSession} />
+      <TextInput
+        placeholder="Search sessions..."
+        placeholderTextColor={themeColors.mutedForeground}
+        style={[styles.searchInput, { borderColor: themeColors.input, color: themeColors.text }]}
+      />
     </View>
   );
 
   const renderFooter = () => (
     <Link href="/models" asChild>
-      <Button title="Manage Models" color={tint} />
+      <Button title="Manage Models" color={themeColors.primary} />
     </Link>
   );
 
@@ -36,7 +40,7 @@ function CustomDrawerContent() {
         data={sessions}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
-          <ThemedView style={[styles.sessionItem, item.id === activeSessionId && styles.activeSession]}>
+          <ThemedView style={[styles.sessionItem, { borderBottomColor: themeColors.border }, item.id === activeSessionId && { backgroundColor: themeColors.accent }]}>
             <Link href="/" asChild>
               <ThemedText onPress={() => setActiveSession(item.id)}>{item.name}</ThemedText>
             </Link>
@@ -86,19 +90,13 @@ const styles = StyleSheet.create({
     padding: 10,
     borderRadius: 5,
     borderWidth: 1,
-    borderColor: '#555',
-    color: '#fff',
   },
   sessionItem: {
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#333',
-  },
-  activeSession: {
-    backgroundColor: '#333',
   },
   scrollContainer: {
-    paddingBottom: 20, // Add some padding at the bottom
+    paddingBottom: 20,
   },
 });

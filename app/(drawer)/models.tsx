@@ -1,6 +1,6 @@
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
-import { useThemeColor } from '@/hooks/useThemeColor';
+import { useTheme } from '@/hooks/useTheme';
 import useAppStore from '@/store/appStore';
 import { ModelState } from '@/store/types';
 import { Link } from 'expo-router';
@@ -15,23 +15,24 @@ interface ModelItemProps {
 }
 
 const ModelItem: React.FC<ModelItemProps> = ({ item, isActive, onSetActive, progress }) => {
-  const tint = useThemeColor({}, 'tint');
+  const colors = useTheme();
+
   return (
-    <View style={styles.modelCard}>
+    <View style={[styles.modelCard, { backgroundColor: colors.card }]}>
       <View style={styles.modelInfo}>
         <ThemedText style={styles.modelName}>{item.model.name}</ThemedText>
-        <ThemedText style={styles.modelStatus}>{item.status.replace('_', ' ')}</ThemedText>
+        <ThemedText style={[styles.modelStatus, { color: colors.mutedForeground }]}>{item.status.replace('_', ' ')}</ThemedText>
       </View>
       <View style={styles.modelActions}>
         {item.status === 'downloaded' && !isActive && (
-          <Button title="Set Active" color={tint} onPress={() => onSetActive(item.model.name)} />
+          <Button title="Set Active" color={colors.accent} onPress={() => onSetActive(item.model.name)} />
         )}
         {item.status === 'downloaded' && isActive && (
-          <ThemedText style={styles.activeText}>Active</ThemedText>
+          <ThemedText style={[styles.activeText, { color: colors.accent }]}>Active</ThemedText>
         )}
         {item.status === 'not_downloaded' && (
           <Link href={{ pathname: '/modal/downloader', params: { modelName: item.model.name } }} asChild>
-            <Button title="Download" color={tint} />
+            <Button title="Download" color={colors.accent} />
           </Link>
         )}
         {item.status === 'downloading' && (
@@ -111,7 +112,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 16,
     borderRadius: 8,
-    backgroundColor: '#222',
     marginBottom: 12,
   },
   modelInfo: {
@@ -123,14 +123,12 @@ const styles = StyleSheet.create({
   },
   modelStatus: {
     fontSize: 12,
-    color: '#888',
     textTransform: 'capitalize',
   },
   modelActions: {
     marginLeft: 16,
   },
   activeText: {
-    color: '#4CAF50',
     fontWeight: 'bold',
   },
 });

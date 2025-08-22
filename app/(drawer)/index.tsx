@@ -1,15 +1,14 @@
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
-import { useThemeColor } from '@/hooks/useThemeColor';
+import { useTheme } from '@/hooks/useTheme';
 import { LLMServiceFactory } from '@/services/llm/LLMServiceFactory';
 import useAppStore from '@/store/appStore';
 import { router } from 'expo-router';
-import { useEffect, useState } from 'react';
-import { Button, FlatList, StyleSheet, TextInput, View, ActivityIndicator } from 'react-native';
+import { useEffect, useMemo, useState } from 'react';
+import { ActivityIndicator, Button, FlatList, StyleSheet, TextInput, View } from 'react-native';
 import { v4 as uuidv4 } from 'uuid';
 
 export default function ChatScreen() {
-  const tint = useThemeColor({}, 'tint');
   const {
     activeModel,
     models,
@@ -23,6 +22,66 @@ export default function ChatScreen() {
     clearError,
     initializeSessions,
   } = useAppStore();
+
+  const theme = useTheme()
+
+  const styles = useMemo(() => StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  messageList: {
+    flex: 1,
+    width: '100%',
+    padding: 8,
+  },
+  bubble: {
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 8,
+    maxWidth: '80%',
+  },
+  userBubble: {
+    alignSelf: 'flex-end',
+    backgroundColor: theme.accent,
+  },
+  modelBubble: {
+    alignSelf: 'flex-start',
+    backgroundColor: theme.card,
+  },
+  inputContainer: {
+    flexDirection: 'row',
+    padding: 8,
+    borderTopWidth: 1,
+    borderColor: theme.card,
+    alignItems: 'center',
+    width: '100%',
+  },
+  textInput: {
+    flex: 1,
+    marginRight: 8,
+    padding: 10,
+    borderRadius: 5,
+    borderWidth: 1,
+    borderColor: theme.input, // Use themed input border
+    color: theme.text, // Use themed text color
+  },
+  loading: {
+    marginVertical: 10,
+  },
+  errorContainer: {
+    padding: 10,
+    backgroundColor: theme.destructive, // Use themed destructive color
+    borderRadius: 5,
+    margin: 10,
+    alignItems: 'center',
+  },
+  errorText: {
+    color: theme.primaryForeground, // Use themed foreground color
+    marginBottom: 5,
+  },
+}), [theme]);
 
   const [inputText, setInputText] = useState('');
 
@@ -113,7 +172,7 @@ export default function ChatScreen() {
         )}
         style={styles.messageList}
       />
-      {appStatus === 'GENERATING' && <ActivityIndicator size="large" color={tint} style={styles.loading} />}
+      {appStatus === 'GENERATING' && <ActivityIndicator size="large" color={theme.accent} style={styles.loading} />}
       {appStatus === 'ERROR' && (
         <View style={styles.errorContainer}>
           <ThemedText style={styles.errorText}>{errorMessage}</ThemedText>
@@ -123,72 +182,14 @@ export default function ChatScreen() {
       <View style={styles.inputContainer}>
         <TextInput
           placeholder="Type your message..."
-          placeholderTextColor="#999"
+          placeholderTextColor={theme.mutedForeground} // Use themed muted foreground
           style={styles.textInput}
           value={inputText}
           onChangeText={setInputText}
           editable={appStatus === 'IDLE'}
         />
-        <Button title="Send" color={tint} onPress={handleSend} disabled={appStatus !== 'IDLE'} />
+        <Button title="Send" color={theme.accent} onPress={handleSend} disabled={appStatus !== 'IDLE'} />
       </View>
     </ThemedView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  messageList: {
-    flex: 1,
-    width: '100%',
-    padding: 8,
-  },
-  bubble: {
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 8,
-    maxWidth: '80%',
-  },
-  userBubble: {
-    alignSelf: 'flex-end',
-    backgroundColor: '#007AFF',
-  },
-  modelBubble: {
-    alignSelf: 'flex-start',
-    backgroundColor: '#333',
-  },
-  inputContainer: {
-    flexDirection: 'row',
-    padding: 8,
-    borderTopWidth: 1,
-    borderColor: '#333',
-    alignItems: 'center',
-    width: '100%',
-  },
-  textInput: {
-    flex: 1,
-    marginRight: 8,
-    padding: 10,
-    borderRadius: 5,
-    borderWidth: 1,
-    borderColor: '#555',
-    color: '#fff',
-  },
-  loading: {
-    marginVertical: 10,
-  },
-  errorContainer: {
-    padding: 10,
-    backgroundColor: '#ff4d4d',
-    borderRadius: 5,
-    margin: 10,
-    alignItems: 'center',
-  },
-  errorText: {
-    color: '#fff',
-    marginBottom: 5,
-  },
-});
