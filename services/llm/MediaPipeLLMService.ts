@@ -1,7 +1,5 @@
 import MODELS, { Online } from '@/constants/Models';
-import ExpoLlmMediapipe, {
-    NativeModuleSubscription,
-} from 'expo-llm-mediapipe';
+import ExpoLlmMediapipe, { NativeModuleSubscription } from 'expo-llm-mediapipe';
 import { LLMService } from './types';
 
 export class MediaPipeLLMService implements LLMService {
@@ -62,31 +60,50 @@ export class MediaPipeLLMService implements LLMService {
         if (this.modelHandle === null) {
             return [null, new Error('Model not loaded.')];
         }
-        try {
-            const requestId = ++this.requestIdCounter;
 
-            ExpoLlmMediapipe.addListener('onPartialResponse', (event) => {
-                if (event.handle === this.modelHandle && event.requestId === requestId) {
-                    onToken(event.response);
+        const requestId = ++this.requestIdCounter;
+        let partialResponseSubscription: NativeModuleSubscription | null = null;
+        let errorResponseSubscription: NativeModuleSubscription | null = null;
+
+        return new Promise(async (resolve, reject) => {
+            try {
+                partialResponseSubscription = ExpoLlmMediapipe.addListener(
+                    'onPartialResponse',
+                    (event) => {
+                        if (event.handle === this.modelHandle && event.requestId === requestId) {
+                            onToken(event.response);
+                        }
+                    }
+                );
+
+                errorResponseSubscription = ExpoLlmMediapipe.addListener(
+                    'onErrorResponse',
+                    (event) => {
+                        if (event.handle === this.modelHandle && event.requestId === requestId) {
+                            console.error(`Stream error for request ${requestId}: ${event.error}`);
+                            reject(new Error(event.error));
+                        }
+                    }
+                );
+
+                await ExpoLlmMediapipe.generateResponseAsync(
+                    this.modelHandle!,
+                    requestId,
+                    prompt
+                );
+
+                resolve([undefined, null]);
+            } catch (e: any) {
+                reject(e);
+            } finally {
+                if (partialResponseSubscription) {
+                    partialResponseSubscription.remove();
                 }
-            });
-
-            ExpoLlmMediapipe.addListener('onErrorResponse', (event) => {
-                if (event.handle === this.modelHandle && event.requestId === requestId) {
-                    console.error(`Stream error for request ${requestId}: ${event.error}`);
+                if (errorResponseSubscription) {
+                    errorResponseSubscription.remove();
                 }
-            });
-
-            await ExpoLlmMediapipe.generateResponseAsync(
-                this.modelHandle,
-                requestId,
-                prompt
-            );
-
-            return [undefined, null];
-        } catch (e: any) {
-            return [null, e];
-        }
+            }
+        });
     }
 
     async unloadModel(): Promise<[void, null] | [null, Error]> {
@@ -107,16 +124,9 @@ export class MediaPipeLLMService implements LLMService {
         onProgress: (progress: number) => void
     ): Promise<[string, null] | [null, Error]> {
         console.log(`MediaPipeLLMService: Downloading model ${modelName}`);
-        let model: Online | null = null;
-        for (const backend of MODELS) {
-            const foundModel = backend.models.find((m) => m.name === modelName);
-            if (foundModel && foundModel.type === 'online') {
-                model = foundModel;
-                break;
-            }
-        }
+        const model = MODELS.find((m) => m.name === modelName);
 
-        if (!model || !model.links) {
+        if (!model || model.type !== 'online' || !model.links) {
             console.log(`MediaPipeLLMService: Invalid model name or missing link for ${modelName}`);
             return [null, new Error('Invalid model name or missing link.')];
         }
@@ -124,47 +134,40 @@ export class MediaPipeLLMService implements LLMService {
         const sanitizedModelName = modelName.replace(/\//g, '-');
         console.log(`MediaPipeLLMService: Sanitized model name to ${sanitizedModelName}`);
 
-        return new Promise((resolve) => {
-            let subscription: NativeModuleSubscription | null = null;
+        let subscription: NativeModuleSubscription | null = null;
 
-            const cleanup = () => {
-                if (subscription) {
-                    subscription.remove();
-                    subscription = null;
-                }
-            };
-
-            subscription = ExpoLlmMediapipe.addListener(
-                'downloadProgress',
-                (event) => {
-                    if (event.modelName === sanitizedModelName) {
-                        if (event.status === 'downloading' && event.progress !== undefined) {
-                            console.log(`MediaPipeLLMService: Download progress for ${sanitizedModelName}: ${event.progress}`);
-                            onProgress(event.progress);
-                        } else if (event.status === 'completed') {
-                            console.log(`MediaPipeLLMService: Download completed for ${sanitizedModelName}`);
-                            cleanup();
-                            resolve([modelName, null]);
-                        } else if (event.status === 'error') {
-                            console.log(`MediaPipeLLMService: Download error for ${sanitizedModelName}: ${event.error}`);
-                            cleanup();
-                            resolve([null, new Error(event.error || 'Download failed.')]);
-                        } else if (event.status === 'cancelled') {
-                            console.log(`MediaPipeLLMService: Download cancelled for ${sanitizedModelName}`);
-                            cleanup();
-                            resolve([null, new Error('Download cancelled.')]);
+        return new Promise(async (resolve, reject) => {
+            try {
+                subscription = ExpoLlmMediapipe.addListener(
+                    'downloadProgress',
+                    (event) => {
+                        if (event.modelName === sanitizedModelName) {
+                            if (event.status === 'downloading' && event.progress !== undefined) {
+                                console.log(`MediaPipeLLMService: Download progress for ${sanitizedModelName}: ${event.progress}`);
+                                onProgress(event.progress);
+                            } else if (event.status === 'completed') {
+                                console.log(`MediaPipeLLMService: Download completed for ${sanitizedModelName}`);
+                                resolve([modelName, null]);
+                            } else if (event.status === 'error') {
+                                console.log(`MediaPipeLLMService: Download error for ${sanitizedModelName}: ${event.error}`);
+                                reject(new Error(event.error || 'Download failed.'));
+                            } else if (event.status === 'cancelled') {
+                                console.log(`MediaPipeLLMService: Download cancelled for ${sanitizedModelName}`);
+                                reject(new Error('Download cancelled.'));
+                            }
                         }
                     }
-                }
-            );
+                );
 
-            ExpoLlmMediapipe.downloadModel(url, sanitizedModelName, { overwrite: true }).catch(
-                (e: any) => {
-                    console.log(`MediaPipeLLMService: Error downloading model ${sanitizedModelName}: ${e.message}`);
-                    cleanup();
-                    resolve([null, e]);
+                await ExpoLlmMediapipe.downloadModel(url, sanitizedModelName, { overwrite: true });
+            } catch (e: any) {
+                console.log(`MediaPipeLLMService: Error downloading model ${sanitizedModelName}: ${e.message}`);
+                reject(e);
+            } finally {
+                if (subscription) {
+                    subscription.remove();
                 }
-            );
+            }
         });
     }
 }

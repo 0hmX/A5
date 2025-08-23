@@ -5,21 +5,22 @@ import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { useTheme } from '@/hooks/useTheme';
 import useAppStore from '@/store/appStore';
+import React, { useCallback, useMemo } from 'react';
 import { Button, FlatList, StyleSheet, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-function CustomDrawerContent() {
+const CustomDrawerContent = React.memo(() => {
   const themeColors = useTheme();
   console.log('CustomDrawerContent: themeColors:', themeColors);
   const { sessions, createNewSession, setActiveSession, activeSessionId } = useAppStore();
 
-  const handleCreateNewSession = () => {
+  const handleCreateNewSession = useCallback(() => {
     console.log('CustomDrawerContent: Creating new session');
     createNewSession();
     router.push('/');
-  };
+  }, [createNewSession]);
 
-  const renderHeader = () => {
+  const renderHeader = useMemo(() => {
     console.log('CustomDrawerContent: renderHeader - themeColors.accent:', themeColors.accent);
     console.log('CustomDrawerContent: renderHeader - themeColors.mutedForeground:', themeColors.mutedForeground);
     console.log('CustomDrawerContent: renderHeader - themeColors.input:', themeColors.input);
@@ -35,7 +36,19 @@ function CustomDrawerContent() {
         />
       </View>
     );
-  };
+  }, [themeColors, handleCreateNewSession]);
+
+  const renderItem = useCallback(({ item }: { item: any }) => {
+    console.log('CustomDrawerContent: renderItem - themeColors.border:', themeColors.border);
+    console.log('CustomDrawerContent: renderItem - themeColors.accent (activeSession):', themeColors.accent);
+    return (
+      <ThemedView style={[styles.sessionItem, { borderBottomColor: themeColors.border }, item.id === activeSessionId && { backgroundColor: themeColors.accent }]}>
+        <Link href="/" asChild>
+          <ThemedText onPress={() => setActiveSession(item.id)}>{item.name}</ThemedText>
+        </Link>
+      </ThemedView>
+    );
+  }, [themeColors, activeSessionId, setActiveSession]);
 
   return (
     <SafeAreaView style={{ flex: 1 }} edges={['top', 'bottom']}>
@@ -43,24 +56,14 @@ function CustomDrawerContent() {
         <FlatList
           data={sessions}
           keyExtractor={(item) => item.id}
-          renderItem={({ item }) => {
-            console.log('CustomDrawerContent: renderItem - themeColors.border:', themeColors.border);
-            console.log('CustomDrawerContent: renderItem - themeColors.accent (activeSession):', themeColors.accent);
-            return (
-              <ThemedView style={[styles.sessionItem, { borderBottomColor: themeColors.border }, item.id === activeSessionId && { backgroundColor: themeColors.accent }]}>
-                <Link href="/" asChild>
-                  <ThemedText onPress={() => setActiveSession(item.id)}>{item.name}</ThemedText>
-                </Link>
-              </ThemedView>
-            );
-          }}
+          renderItem={renderItem}
           ListHeaderComponent={renderHeader}
           contentContainerStyle={styles.scrollContainer}
         />
       </ThemedView>
     </SafeAreaView>
   );
-}
+});
 
 export default function DrawerLayout() {
   return (

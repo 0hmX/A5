@@ -16,12 +16,9 @@ export type Ofline = {
 
 export type Models = (Online | Ofline) & Common
 
-/*
- * name are globally unique 
-*/
 const MODELS: Models[] = [
     {
-        name: "google/gemini-2",
+        name: "gemma3-1b-it-int4",
         tags: ["int4", "super small"],
         backend: "mediapipe",
         links: "https://huggingface.co/cu8code/mediapipe/resolve/main/gemma3-1b-it-int4.task",

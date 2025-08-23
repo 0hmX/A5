@@ -13,19 +13,20 @@ interface AppState {
     progress: number;
     sessions: ChatSession[];
     activeSessionId: string | null;
-    isDbInitialized: boolean; // Added
+    isDbInitialized: boolean;
+    downloadingModels: Record<string, number>; // Added
     setAppStatus: (status: AppStatus) => void;
     setError: (message: string) => void;
     clearError: () => void;
     initializeModels: () => void;
     setActiveModel: (name: string) => void;
     setModelStatus: (name: string, status: ModelStatus) => void;
-    setProgress: (progress: number) => void;
+    setProgress: (modelName: string, progress: number) => void; // Modified
     initializeSessions: () => Promise<void>;
     createNewSession: () => Promise<string | null>;
     setActiveSession: (sessionId: string) => void;
     addMessageToSession: (sessionId: string, message: ChatMessage) => Promise<void>;
-    setDbInitialized: (initialized: boolean) => void; // Added
+    setDbInitialized: (initialized: boolean) => void;
 }
 
 const useAppStore = create<AppState>((set, get) => ({
@@ -36,7 +37,8 @@ const useAppStore = create<AppState>((set, get) => ({
     progress: 0,
     sessions: [],
     activeSessionId: null,
-    isDbInitialized: false, // Added
+    isDbInitialized: false,
+    downloadingModels: {}, // Added
     setAppStatus: (status: AppStatus) => set({ appStatus: status, errorMessage: null }),
     setError: (message: string) => set({ errorMessage: message, appStatus: 'ERROR' }),
     clearError: () => set({ errorMessage: null }),
@@ -57,13 +59,28 @@ const useAppStore = create<AppState>((set, get) => ({
     },
     setActiveModel: (name: string) => set({ activeModel: name }),
     setModelStatus: (name: string, status: ModelStatus) =>
+        set((state) => {
+            const newDownloadingModels = { ...state.downloadingModels };
+            if (status === 'downloading') {
+                newDownloadingModels[name] = 0;
+            } else {
+                delete newDownloadingModels[name];
+            }
+            return {
+                models: {
+                    ...state.models,
+                    [name]: { ...state.models[name], status },
+                },
+                downloadingModels: newDownloadingModels,
+            };
+        }),
+    setProgress: (modelName: string, progress: number) =>
         set((state) => ({
-            models: {
-                ...state.models,
-                [name]: { ...state.models[name], status },
+            downloadingModels: {
+                ...state.downloadingModels,
+                [modelName]: progress,
             },
         })),
-    setProgress: (progress: number) => set({ progress }),
     initializeSessions: async () => {
         console.log('AppStore: initializeSessions started');
         const [allDbSessions, error] = await getAllSessions();
@@ -170,7 +187,7 @@ const useAppStore = create<AppState>((set, get) => ({
             ),
         }));
     },
-    setDbInitialized: (initialized: boolean) => set({ isDbInitialized: initialized }), // Added
+    setDbInitialized: (initialized: boolean) => set({ isDbInitialized: initialized }),
 }));
 
 export default useAppStore;
