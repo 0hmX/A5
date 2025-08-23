@@ -1,28 +1,21 @@
 import { Stack } from 'expo-router';
-import 'react-native-get-random-values';
-import { ThemedView } from '../components/ThemedView';
 import { useEffect } from 'react';
-import { initDB } from '../db/database';
-import useAppStore from '../store/appStore';
+import 'react-native-get-random-values';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { ThemedView } from '../components/ThemedView';
+import serviceLocator from '../lib/di/ServiceLocator';
+import { DatabaseService } from '../services/DatabaseService';
+import { LLMServiceManager } from '../services/llm/LLMServiceManager';
 
 export default function RootLayout() {
-  const { setDbInitialized } = useAppStore();
-
   useEffect(() => {
-    const initializeDatabase = async () => {
-      console.log('RootLayout: Initializing database...');
-      const [success, error] = await initDB();
-      if (success) {
-        console.log('RootLayout: Database initialized successfully.');
-        setDbInitialized(true);
-      } else {
-        console.error('RootLayout: Failed to initialize database:', error);
-        setDbInitialized(false);
-      }
+    const initializeServices = async () => {
+      serviceLocator.register('DatabaseService', () => new DatabaseService());
+      serviceLocator.register('LLMServiceManager', () => new LLMServiceManager());
+      await serviceLocator.init();
     };
-    initializeDatabase();
-  }, [setDbInitialized]);
+    initializeServices();
+  }, []);
 
   return (
     <SafeAreaProvider>

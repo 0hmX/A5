@@ -3,7 +3,8 @@ import ExpoLlmMediapipe from 'expo-llm-mediapipe';
 import { create } from 'zustand';
 import { v4 as uuidv4 } from 'uuid';
 import { AppStatus, ChatMessage, ChatSession, ModelState, ModelStatus } from './types';
-import { createSession, getAllSessions, insertMessage, getMessagesForSession } from '../db/database';
+import serviceLocator from '../lib/di/ServiceLocator';
+import { DatabaseService } from '../services/DatabaseService';
 
 interface AppState {
     appStatus: AppStatus;
@@ -13,20 +14,18 @@ interface AppState {
     progress: number;
     sessions: ChatSession[];
     activeSessionId: string | null;
-    isDbInitialized: boolean;
-    downloadingModels: Record<string, number>; // Added
+    downloadingModels: Record<string, number>;
     setAppStatus: (status: AppStatus) => void;
     setError: (message: string) => void;
     clearError: () => void;
     initializeModels: () => void;
     setActiveModel: (name: string) => void;
     setModelStatus: (name: string, status: ModelStatus) => void;
-    setProgress: (modelName: string, progress: number) => void; // Modified
+    setProgress: (modelName: string, progress: number) => void;
     initializeSessions: () => Promise<void>;
     createNewSession: () => Promise<string | null>;
     setActiveSession: (sessionId: string) => void;
     addMessageToSession: (sessionId: string, message: ChatMessage) => Promise<void>;
-    setDbInitialized: (initialized: boolean) => void;
 }
 
 const useAppStore = create<AppState>((set, get) => ({
@@ -37,8 +36,7 @@ const useAppStore = create<AppState>((set, get) => ({
     progress: 0,
     sessions: [],
     activeSessionId: null,
-    isDbInitialized: false,
-    downloadingModels: {}, // Added
+    downloadingModels: {},
     setAppStatus: (status: AppStatus) => set({ appStatus: status, errorMessage: null }),
     setError: (message: string) => set({ errorMessage: message, appStatus: 'ERROR' }),
     clearError: () => set({ errorMessage: null }),
@@ -83,7 +81,8 @@ const useAppStore = create<AppState>((set, get) => ({
         })),
     initializeSessions: async () => {
         console.log('AppStore: initializeSessions started');
-        const [allDbSessions, error] = await getAllSessions();
+        const dbService = serviceLocator.get<DatabaseService>('DatabaseService');
+        const [allDbSessions, error] = await dbService.getAllSessions();
         if (error) {
             console.error('AppStore: Error getting all sessions:', error.message);
             get().setError(error.message);
@@ -96,7 +95,7 @@ const useAppStore = create<AppState>((set, get) => ({
         if (allDbSessions.length === 0) {
             console.log('AppStore: No sessions found, creating default session');
             const newSessionId = uuidv4();
-            const [createdId, createError] = await createSession(newSessionId, 'Default Session');
+            const [createdId, createError] = await dbService.createSession(newSessionId, 'Default Session');
             if (createError) {
                 console.error('AppStore: Error creating default session:', createError.message);
                 get().setError(createError.message);
@@ -114,7 +113,7 @@ const useAppStore = create<AppState>((set, get) => ({
         } else {
             console.log('AppStore: Loading messages for existing sessions');
             for (const dbSession of allDbSessions) {
-                const [messages, messagesError] = await getMessagesForSession(dbSession.id);
+                const [messages, messagesError] = await dbService.getMessagesForSession(dbSession.id);
                 if (messagesError) {
                     console.error(`AppStore: Error getting messages for session ${dbSession.id}:`, messagesError.message);
                     get().setError(messagesError.message);
@@ -132,10 +131,11 @@ const useAppStore = create<AppState>((set, get) => ({
     },
     createNewSession: async (): Promise<string | null> => {
         console.log('AppStore: createNewSession started');
+        const dbService = serviceLocator.get<DatabaseService>('DatabaseService');
         const newSessionId = uuidv4();
         const newSessionName = `Session ${get().sessions.length + 1}`;
         console.log(`AppStore: Creating session in DB with id: ${newSessionId}`);
-        const [createdId, createError] = await createSession(newSessionId, newSessionName);
+        const [createdId, createError] = await dbService.createSession(newSessionId, newSessionName);
         if (createError) {
             get().setError(createError.message);
             return null;
@@ -160,7 +160,8 @@ const useAppStore = create<AppState>((set, get) => ({
         // Load messages for the newly active session
         const sessionToActivate = get().sessions.find(s => s.id === sessionId);
         if (sessionToActivate && !sessionToActivate.history.length) {
-            getMessagesForSession(sessionId).then(([messages, error]) => {
+            const dbService = serviceLocator.get<DatabaseService>('DatabaseService');
+            dbService.getMessagesForSession(sessionId).then(([messages, error]) => {
                 if (error) {
                     get().setError(error.message);
                     return;
@@ -174,7 +175,8 @@ const useAppStore = create<AppState>((set, get) => ({
         }
     },
     addMessageToSession: async (sessionId: string, message: ChatMessage) => {
-        const [insertedId, error] = await insertMessage(message.id, sessionId, message.role, message.content);
+        const dbService = serviceLocator.get<DatabaseService>('DatabaseService');
+        const [insertedId, error] = await dbService.insertMessage(message.id, sessionId, message.role, message.content);
         if (error) {
             get().setError(error.message);
             return;
@@ -187,8 +189,6 @@ const useAppStore = create<AppState>((set, get) => ({
             ),
         }));
     },
-    setDbInitialized: (initialized: boolean) => set({ isDbInitialized: initialized }),
 }));
 
 export default useAppStore;
-

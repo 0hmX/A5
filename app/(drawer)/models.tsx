@@ -1,13 +1,14 @@
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { useTheme } from '@/hooks/useTheme';
-import { LLMServiceFactory } from '@/services/llm/LLMServiceFactory';
 import useAppStore from '@/store/appStore';
 import { ModelState } from '@/store/types';
 import ExpoLlmMediapipe from 'expo-llm-mediapipe';
 import { router } from "expo-router";
 import React, { useCallback, useEffect } from 'react';
 import { Button, SectionList, StyleSheet, View } from 'react-native';
+import serviceLocator from '../../lib/di/ServiceLocator';
+import { LLMServiceManager } from '../../services/llm/LLMServiceManager';
 
 interface ModelItemProps {
   item: ModelState;
@@ -118,7 +119,8 @@ export default function ModelManagementScreen() {
 
   const handleDownload = useCallback(async (modelName: string) => {
     console.log(`ModelManagementScreen: Starting download for ${modelName}`);
-    const [llmService, serviceError] = LLMServiceFactory.getService(modelName);
+    const llmServiceManager = serviceLocator.get<LLMServiceManager>('LLMServiceManager');
+    const [llmService, serviceError] = await llmServiceManager.getService(modelName);
 
     if (serviceError) {
       console.log(`ModelManagementScreen: Service error: ${serviceError.message}`);

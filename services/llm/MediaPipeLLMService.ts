@@ -1,6 +1,6 @@
-import MODELS, { Online } from '@/constants/Models';
+import MODELS from '@/constants/Models';
 import ExpoLlmMediapipe, { NativeModuleSubscription } from 'expo-llm-mediapipe';
-import { LLMService } from './types';
+import { LLMService } from './LLMService';
 
 export class MediaPipeLLMService implements LLMService {
     private modelHandle: number | null = null;

@@ -1,13 +1,14 @@
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { useTheme } from '@/hooks/useTheme';
-import { LLMServiceFactory } from '@/services/llm/LLMServiceFactory';
 import useAppStore from '@/store/appStore';
 import { router } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Button, FlatList, StyleSheet, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { v4 as uuidv4 } from 'uuid';
+import serviceLocator from '../../lib/di/ServiceLocator';
+import { LLMServiceManager } from '../../services/llm/LLMServiceManager';
 
 export default function ChatScreen() {
   const {
@@ -22,7 +23,6 @@ export default function ChatScreen() {
     setError,
     clearError,
     initializeSessions,
-    isDbInitialized, // Added
   } = useAppStore();
 
   console.log('ChatScreen: Rendering with activeSessionId:', activeSessionId);
@@ -93,11 +93,9 @@ export default function ChatScreen() {
   const modelState = activeModel ? models[activeModel] : null;
 
   useEffect(() => {
-    if (isDbInitialized) { // Only initialize if DB is ready
-      console.log('ChatScreen: Initializing sessions');
-      initializeSessions();
-    }
-  }, [initializeSessions, isDbInitialized]); // Add isDbInitialized to dependency array
+    console.log('ChatScreen: Initializing sessions');
+    initializeSessions();
+  }, [initializeSessions]);
 
   useEffect(() => {
     console.log('ChatScreen: activeSessionId changed to', activeSessionId);
@@ -114,7 +112,8 @@ export default function ChatScreen() {
 
       console.log('ChatScreen: loadModel - Setting appStatus to LOADING_MODEL');
       setAppStatus('LOADING_MODEL');
-      const [llmService, serviceError] = LLMServiceFactory.getService(activeModel);
+      const llmServiceManager = serviceLocator.get<LLMServiceManager>('LLMServiceManager');
+      const [llmService, serviceError] = await llmServiceManager.getService(activeModel);
 
       if (serviceError) {
         console.error('ChatScreen: loadModel - Service error:', serviceError.message);
@@ -160,7 +159,8 @@ export default function ChatScreen() {
     console.log('ChatScreen: handleSend - Setting appStatus to GENERATING');
     setAppStatus('GENERATING');
 
-    const [llmService, serviceError] = LLMServiceFactory.getService(activeModel);
+    const llmServiceManager = serviceLocator.get<LLMServiceManager>('LLMServiceManager');
+    const [llmService, serviceError] = await llmServiceManager.getService(activeModel);
 
     if (serviceError) {
       console.error('ChatScreen: handleSend - Service error:', serviceError.message);
@@ -250,4 +250,3 @@ export default function ChatScreen() {
     </ThemedView>
   );
 }
-

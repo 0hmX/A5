@@ -1,6 +1,6 @@
-import { MediaPipeLLMService } from './MediaPipeLLMService';
-import { LLMService } from './types';
 import MODELS from '../../constants/Models';
+import { LLMService } from './LLMService';
+import { MediaPipeLLMService } from './MediaPipeLLMService';
 
 export class LLMServiceFactory {
     static getService(modelName: string): [LLMService, null] | [null, Error] {
