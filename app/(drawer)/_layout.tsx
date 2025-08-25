@@ -6,7 +6,7 @@ import { ThemedView } from '@/components/ThemedView';
 import { useTheme } from '@/hooks/useTheme';
 import useSessionStore from '@/store/sessionStore';
 import React, { useCallback, useMemo } from 'react';
-import { Button, FlatList, StyleSheet, TextInput, View } from 'react-native';
+import { Button, FlatList, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 const CustomDrawerContent = React.memo(() => {
@@ -27,12 +27,13 @@ const CustomDrawerContent = React.memo(() => {
     console.log('CustomDrawerContent: renderHeader - themeColors.text:', themeColors.text);
     return (
       <View>
-        <ThemedText style={styles.drawerHeader}>a5 chat</ThemedText>
+        <ThemedText className="text-2xl font-bold pt-8 pb-4 px-4 text-center">a5 chat</ThemedText>
         <Button title="New Chat" color={themeColors.accent} onPress={handleCreateNewSession} />
         <TextInput
           placeholder="Search sessions..."
           placeholderTextColor={themeColors.mutedForeground}
-          style={[styles.searchInput, { borderColor: themeColors.input, color: themeColors.text }]}
+          className="m-4 p-2.5 rounded-md border"
+          style={{ borderColor: themeColors.input, color: themeColors.text }}
         />
       </View>
     );
@@ -42,7 +43,13 @@ const CustomDrawerContent = React.memo(() => {
     console.log('CustomDrawerContent: renderItem - themeColors.border:', themeColors.border);
     console.log('CustomDrawerContent: renderItem - themeColors.accent (activeSession):', themeColors.accent);
     return (
-      <ThemedView style={[styles.sessionItem, { borderBottomColor: themeColors.border }, item.id === activeSessionId && { backgroundColor: themeColors.accent }]}>
+      <ThemedView 
+        className="py-3 px-4 border-b"
+        style={{ 
+          borderBottomColor: themeColors.border,
+          backgroundColor: item.id === activeSessionId ? themeColors.accent : 'transparent'
+        }}
+      >
         <Link href="/" asChild>
           <ThemedText onPress={() => setActiveSession(item.id)}>{item.name}</ThemedText>
         </Link>
@@ -51,14 +58,14 @@ const CustomDrawerContent = React.memo(() => {
   }, [themeColors, activeSessionId, setActiveSession]);
 
   return (
-    <SafeAreaView style={{ flex: 1 }} edges={['top', 'bottom']}>
-      <ThemedView style={{ flex: 1 }}>
+    <SafeAreaView className="flex-1" edges={['top', 'bottom']}>
+      <ThemedView className="flex-1">
         <FlatList
           data={sessions}
           keyExtractor={(item) => item.id}
           renderItem={renderItem}
           ListHeaderComponent={renderHeader}
-          contentContainerStyle={styles.scrollContainer}
+          contentContainerClassName="pb-5"
         />
       </ThemedView>
     </SafeAreaView>
@@ -77,28 +84,3 @@ export default function DrawerLayout() {
     </Drawer>
   );
 }
-
-const styles = StyleSheet.create({
-  drawerHeader: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    paddingTop: 32,
-    paddingBottom: 16,
-    paddingHorizontal: 16,
-    textAlign: 'center',
-  },
-  searchInput: {
-    margin: 16,
-    padding: 10,
-    borderRadius: 5,
-    borderWidth: 1,
-  },
-  sessionItem: {
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderBottomWidth: 1,
-  },
-  scrollContainer: {
-    paddingBottom: 20,
-  },
-});

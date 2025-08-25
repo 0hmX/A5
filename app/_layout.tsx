@@ -1,3 +1,4 @@
+import "@/global.css";
 import { Stack } from 'expo-router';
 import { Suspense, useEffect, useState } from 'react';
 import { ActivityIndicator, View } from 'react-native';
@@ -5,7 +6,6 @@ import 'react-native-get-random-values';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import LoadingGate from '../components/LoadingGate';
 import { ThemedView } from '../components/ThemedView';
-import "../global.css";
 import useDbStore from '../store/dbStore';
 import useModelStore from '../store/modelStore';
 
@@ -24,8 +24,8 @@ export default function RootLayout() {
 
   return (
     <SafeAreaProvider>
-      <ThemedView style={{ flex: 1 }}>
-        <Suspense fallback={<View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}><ActivityIndicator size="large" /></View>}>
+      <ThemedView className="flex-1">
+        <Suspense fallback={<View className="flex-1 justify-center items-center"><ActivityIndicator size="large" /></View>}>
           <LoadingGate onInitialized={() => setIsAppInitialized(true)}>
             {isAppInitialized && (
               <Stack>

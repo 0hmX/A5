@@ -8,7 +8,7 @@ import useSessionStore from '@/store/sessionStore';
 import { ModelState } from '@/store/types';
 import { router } from "expo-router";
 import React, { useCallback, useEffect } from 'react';
-import { Button, SectionList, StyleSheet, View } from 'react-native';
+import { Button, SectionList, View } from 'react-native';
 
 interface ModelItemProps {
   item: ModelState;
@@ -23,12 +23,12 @@ const ModelItem = React.memo<ModelItemProps>(({ item, isActive, onSetActive }) =
   console.log('ModelItem: Rendering', { item, isActive, progress, status });
 
   return (
-    <View style={[styles.modelCard, { backgroundColor: colors.card }]}>
-      <View style={styles.modelInfo}>
-        <ThemedText style={styles.modelName}>{item.model.name}</ThemedText>
-        <ThemedText style={[styles.modelStatus, { color: colors.mutedForeground }]}>{status.replace('_', ' ')}</ThemedText>
+    <View className="flex-row justify-between items-center p-4 rounded-lg mb-3" style={{ backgroundColor: colors.card }}>
+      <View className="flex-1">
+        <ThemedText className="text-base font-bold">{item.model.name}</ThemedText>
+        <ThemedText className="text-xs capitalize" style={{ color: colors.mutedForeground }}>{status.replace('_', ' ')}</ThemedText>
       </View>
-      <View style={styles.modelActions}>
+      <View className="ml-4 flex-row items-center">
         {status === 'downloaded' && !isActive && (
           <>
             <Button title="Set Active" color={colors.accent} onPress={() => {
@@ -47,7 +47,7 @@ const ModelItem = React.memo<ModelItemProps>(({ item, isActive, onSetActive }) =
         )}
         {status === 'downloaded' && isActive && (
           <>
-            <ThemedText style={[styles.activeText, { color: colors.accent }]}>Active</ThemedText>
+            <ThemedText className="font-bold" style={{ color: colors.accent }}>Active</ThemedText>
             <Button
               title="Delete"
               color={colors.destructive}
@@ -118,7 +118,7 @@ export default function ModelManagementScreen() {
   ];
 
   return (
-    <ThemedView style={styles.container}>
+    <ThemedView className="flex-1 p-4">
       <SectionList
         sections={sections}
         keyExtractor={(item) => item.model.name}
@@ -133,49 +133,9 @@ export default function ModelManagementScreen() {
           if (data.length === 0) {
             return null;
           }
-          return <ThemedText style={styles.header}>{title}</ThemedText>;
+          return <ThemedText className="text-2xl font-bold mt-4 mb-2">{title}</ThemedText>;
         }}
       />
     </ThemedView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 16,
-  },
-  header: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    marginTop: 16,
-    marginBottom: 8,
-  },
-  modelCard: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 16,
-    borderRadius: 8,
-    marginBottom: 12,
-  },
-  modelInfo: {
-    flex: 1,
-  },
-  modelName: {
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  modelStatus: {
-    fontSize: 12,
-    textTransform: 'capitalize',
-  },
-  modelActions: {
-    marginLeft: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  activeText: {
-    fontWeight: 'bold',
-  },
-});
