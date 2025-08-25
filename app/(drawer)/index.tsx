@@ -1,29 +1,21 @@
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { useTheme } from '@/hooks/useTheme';
-import useAppStore from '@/store/appStore';
+import useAppStatusStore from '@/store/appStatusStore';
+import useChatStore from '@/store/chatStore';
+import useModelStore from '@/store/modelStore';
+import useSessionStore from '@/store/sessionStore';
 import { router } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Button, FlatList, StyleSheet, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { v4 as uuidv4 } from 'uuid';
-import serviceLocator from '../../lib/di/ServiceLocator';
-import { LLMServiceManager } from '../../services/llm/LLMServiceManager';
 
 export default function ChatScreen() {
-  const {
-    activeModel,
-    models,
-    sessions,
-    activeSessionId,
-    addMessageToSession,
-    appStatus,
-    setAppStatus,
-    errorMessage,
-    setError,
-    clearError,
-    initializeSessions,
-  } = useAppStore();
+  const { activeModel } = useChatStore();
+  const { models, loadModel, generate } = useModelStore();
+  const { sessions, activeSessionId, addMessageToSession, initializeSessions } = useSessionStore();
+  const { appStatus, setAppStatus, errorMessage, setError, clearError } = useAppStatusStore();
 
   console.log('ChatScreen: Rendering with activeSessionId:', activeSessionId);
 
@@ -103,7 +95,7 @@ export default function ChatScreen() {
   }, [activeSessionId, sessions]);
 
   useEffect(() => {
-    const loadModel = async () => {
+    const loadModelAsync = async () => {
       console.log('ChatScreen: loadModel useEffect triggered');
       if (!activeModel || !modelState || modelState.status !== 'downloaded') {
         console.log('ChatScreen: loadModel - Pre-conditions not met (activeModel, modelState, or status)');
@@ -112,29 +104,19 @@ export default function ChatScreen() {
 
       console.log('ChatScreen: loadModel - Setting appStatus to LOADING_MODEL');
       setAppStatus('LOADING_MODEL');
-      const llmServiceManager = serviceLocator.get<LLMServiceManager>('LLMServiceManager');
-      const [llmService, serviceError] = await llmServiceManager.getService(activeModel);
+      const [success, error] = await loadModel(activeModel);
 
-      if (serviceError) {
-        console.error('ChatScreen: loadModel - Service error:', serviceError.message);
-        setError(serviceError.message);
-        setAppStatus('ERROR');
-        return;
-      }
-
-      console.log(`ChatScreen: loadModel - Calling llmService.loadModel for ${activeModel}`);
-      const [_, loadError] = await llmService.loadModel(activeModel, {}); // Pass empty options for now
-      if (loadError) {
-        console.error('ChatScreen: loadModel - Load error:', loadError.message);
-        setError(loadError.message);
+      if (error) {
+        console.error('ChatScreen: loadModel - Load error:', error.message);
+        setError(error.message);
         setAppStatus('ERROR');
         return;
       }
       console.log('ChatScreen: loadModel - Model loaded successfully, setting appStatus to IDLE');
       setAppStatus('IDLE');
     };
-    loadModel();
-  }, [activeModel, modelState, setAppStatus, setError]);
+    loadModelAsync();
+  }, [activeModel, modelState, setAppStatus, setError, loadModel]);
 
   const activeSession = sessions.find(s => s.id === activeSessionId);
   const messages = activeSession ? activeSession.history : [];
@@ -159,18 +141,7 @@ export default function ChatScreen() {
     console.log('ChatScreen: handleSend - Setting appStatus to GENERATING');
     setAppStatus('GENERATING');
 
-    const llmServiceManager = serviceLocator.get<LLMServiceManager>('LLMServiceManager');
-    const [llmService, serviceError] = await llmServiceManager.getService(activeModel);
-
-    if (serviceError) {
-      console.error('ChatScreen: handleSend - Service error:', serviceError.message);
-      setError(serviceError.message);
-      setAppStatus('ERROR');
-      return;
-    }
-
-    console.log(`ChatScreen: handleSend - Calling llmService.generate for ${activeModel}`);
-    const [response, responseError] = await llmService.generate(userMessage.content);
+    const [response, responseError] = await generate(userMessage.content);
 
     if (responseError) {
       console.error('ChatScreen: handleSend - Generate error:', responseError.message);
@@ -182,7 +153,7 @@ export default function ChatScreen() {
     const modelMessage = {
       id: uuidv4(),
       role: 'model' as const,
-      content: response,
+      content: response as string,
       createdAt: new Date().toISOString(),
     };
 

@@ -1,14 +1,17 @@
-import useModelService from '../services/ModelService';
-import { ModelDownloadInfo } from '../store/types';
+import useModelStore from '@/store/modelStore'; // Import useModelStore
+import { ModelDownloadInfo } from '@/store/types';
 
 export function useModelManager(modelName: string) {
-    const { models, downloadModel, deleteModel } = useModelService();
+    const { models, downloadingModels, downloadModel, deleteModel } = useModelStore();
 
     const model = models[modelName];
 
+    const status = downloadingModels[modelName] ? 'downloading' : model?.status || 'not_downloaded';
+    const progress = downloadingModels[modelName] || 0;
+
     return {
-        status: model?.status || 'not_downloaded',
-        progress: model?.progress || 0,
+        status,
+        progress,
         downloadModel: (modelInfo: ModelDownloadInfo) => downloadModel(modelInfo),
         deleteModel: () => deleteModel(modelName),
     };

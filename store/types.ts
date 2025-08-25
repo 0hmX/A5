@@ -7,7 +7,7 @@ export type AppStatus =
     | 'DOWNLOADING'
     | 'ERROR';
 
-export type ModelStatus = 'downloaded' | 'not_downloaded' | 'downloading';
+export type ModelStatus = 'downloaded' | 'not_downloaded' | 'downloading' | 'error';
 
 export interface ModelState {
     model: Models;

@@ -1,12 +1,14 @@
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
+import { useModelManager } from '@/hooks/useModelManager';
 import { useTheme } from '@/hooks/useTheme';
-import useAppStore from '@/store/appStore';
+import useChatStore from '@/store/chatStore';
+import useModelStore from '@/store/modelStore';
+import useSessionStore from '@/store/sessionStore';
 import { ModelState } from '@/store/types';
 import { router } from "expo-router";
 import React, { useCallback, useEffect } from 'react';
 import { Button, SectionList, StyleSheet, View } from 'react-native';
-import { useModelManager } from '../../hooks/useModelManager';
 
 interface ModelItemProps {
   item: ModelState;
@@ -30,8 +32,12 @@ const ModelItem = React.memo<ModelItemProps>(({ item, isActive, onSetActive }) =
         {status === 'downloaded' && !isActive && (
           <>
             <Button title="Set Active" color={colors.accent} onPress={() => {
-              console.log(`ModelItem: Set Active pressed for ${item.model.name}`);
-              onSetActive(item.model.name);
+              if (item.status === 'downloaded') {
+                console.log(`ModelItem: Set Active pressed for ${item.model.name}`);
+                onSetActive(item.model.name);
+              } else {
+                console.log(`ModelItem: Set Active pressed for ${item.model.name}, but item.status is ${item.status}`);
+              }
             }} />
             <Button title="Delete" color={colors.destructive} onPress={() => {
               console.log(`ModelItem: Delete pressed for ${item.model.name}`);
@@ -63,7 +69,7 @@ const ModelItem = React.memo<ModelItemProps>(({ item, isActive, onSetActive }) =
             }} />
         )}
         {status === 'downloading' && (
-          <ThemedText>Downloading... {progress.toFixed(2)}%</ThemedText>
+          <ThemedText>Downloading... {(progress * 100).toFixed(2)}%</ThemedText>
         )}
       </View>
     </View>
@@ -72,14 +78,9 @@ const ModelItem = React.memo<ModelItemProps>(({ item, isActive, onSetActive }) =
 
 export default function ModelManagementScreen() {
   console.log('ModelManagementScreen: Initialized');
-  const {
-    models,
-    activeModel,
-    initializeModels,
-    setActiveModel,
-    activeSessionId,
-    createNewSession,
-  } = useAppStore();
+  const { activeModel, setActiveModel } = useChatStore();
+  const { models, initializeModels } = useModelStore();
+  const { activeSessionId, createNewSession } = useSessionStore();
 
   useEffect(() => {
     console.log('ModelManagementScreen: Initializing models');

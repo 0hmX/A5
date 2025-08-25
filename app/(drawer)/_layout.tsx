@@ -4,7 +4,7 @@ import { Drawer } from 'expo-router/drawer';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { useTheme } from '@/hooks/useTheme';
-import useAppStore from '@/store/appStore';
+import useSessionStore from '@/store/sessionStore';
 import React, { useCallback, useMemo } from 'react';
 import { Button, FlatList, StyleSheet, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -12,7 +12,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 const CustomDrawerContent = React.memo(() => {
   const themeColors = useTheme();
   console.log('CustomDrawerContent: themeColors:', themeColors);
-  const { sessions, createNewSession, setActiveSession, activeSessionId } = useAppStore();
+  const { sessions, createNewSession, setActiveSession, activeSessionId } = useSessionStore();
 
   const handleCreateNewSession = useCallback(() => {
     console.log('CustomDrawerContent: Creating new session');
