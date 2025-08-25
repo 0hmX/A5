@@ -1,16 +1,28 @@
+import LoadingGate from '@/components/LoadingGate';
 import "@/global.css";
+import useDbStore from '@/store/dbStore';
+import useModelStore from '@/store/modelStore';
 import { Stack } from 'expo-router';
 import { Suspense, useEffect, useState } from 'react';
 import { ActivityIndicator, View } from 'react-native';
 import 'react-native-get-random-values';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import LoadingGate from '../components/LoadingGate';
-import { ThemedView } from '../components/ThemedView';
-import useDbStore from '../store/dbStore';
-import useModelStore from '../store/modelStore';
+
+
+import { NAV_THEME } from '@/constants/theme';
+import { useColorScheme, useInitialAndroidBarSync } from '@/lib/useColorScheme';
+import { ThemeProvider as NavThemeProvider } from '@react-navigation/native';
+
+export {
+  // Catch any errors thrown by the Layout component.
+  ErrorBoundary
+} from 'expo-router';
 
 export default function RootLayout() {
+  useInitialAndroidBarSync();
   const [isAppInitialized, setIsAppInitialized] = useState(false);
+  const { colorScheme, isDarkColorScheme } = useColorScheme();
+
 
   useEffect(() => {
     const initializeStores = async () => {
@@ -24,7 +36,7 @@ export default function RootLayout() {
 
   return (
     <SafeAreaProvider>
-      <ThemedView className="flex-1">
+      <NavThemeProvider value={NAV_THEME[colorScheme]}>
         <Suspense fallback={<View className="flex-1 justify-center items-center"><ActivityIndicator size="large" /></View>}>
           <LoadingGate onInitialized={() => setIsAppInitialized(true)}>
             {isAppInitialized && (
@@ -34,7 +46,7 @@ export default function RootLayout() {
             )}
           </LoadingGate>
         </Suspense>
-      </ThemedView>
+      </NavThemeProvider>
     </SafeAreaProvider>
   );
 }

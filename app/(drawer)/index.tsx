@@ -1,5 +1,3 @@
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
 import { useTheme } from '@/hooks/useTheme';
 import useAppStatusStore from '@/store/appStatusStore';
 import useChatStore from '@/store/chatStore';
@@ -7,7 +5,7 @@ import useModelStore from '@/store/modelStore';
 import useSessionStore from '@/store/sessionStore';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Button, FlatList, TextInput, View } from 'react-native';
+import { ActivityIndicator, Button, FlatList, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -33,7 +31,6 @@ export default function ChatScreen() {
 
   useEffect(() => {
     console.log('ChatScreen: activeSessionId changed to', activeSessionId);
-    console.log('ChatScreen: sessions', sessions);
   }, [activeSessionId, sessions]);
 
   useEffect(() => {
@@ -41,11 +38,10 @@ export default function ChatScreen() {
       console.log('ChatScreen: loadModel useEffect triggered');
       setIsModelLoaded(false);
       if (!activeModel || !modelState || modelState.status !== 'downloaded') {
-        console.log('ChatScreen: loadModel - Pre-conditions not met (activeModel, modelState, or status)');
+        console.log('ChatScreen: loadModel - Pre-conditions not met');
         return;
       }
 
-      console.log('ChatScreen: loadModel - Setting appStatus to LOADING_MODEL');
       setAppStatus('LOADING_MODEL');
       const [success, error] = await loadModel(activeModel);
 
@@ -55,7 +51,7 @@ export default function ChatScreen() {
         setAppStatus('ERROR');
         return;
       }
-      console.log('ChatScreen: loadModel - Model loaded successfully, setting appStatus to IDLE');
+      console.log('ChatScreen: Model loaded successfully');
       setAppStatus('IDLE');
       setIsModelLoaded(true);
     };
@@ -68,7 +64,6 @@ export default function ChatScreen() {
   const handleSend = async () => {
     console.log('ChatScreen: handleSend started');
     if (inputText.trim().length === 0 || !activeModel || !activeSessionId || !isModelLoaded || appStatus === 'LOADING_MODEL') {
-      console.log('ChatScreen: handleSend - Pre-conditions not met (empty input, no model/session, or loading)');
       return;
     }
 
@@ -79,16 +74,14 @@ export default function ChatScreen() {
       createdAt: new Date().toISOString(),
     };
 
-    console.log('ChatScreen: handleSend - Adding user message to session');
     addMessageToSession(activeSessionId, userMessage);
     setInputText('');
-    console.log('ChatScreen: handleSend - Setting appStatus to GENERATING');
     setAppStatus('GENERATING');
 
     const [response, responseError] = await generate(userMessage.content);
 
     if (responseError) {
-      console.error('ChatScreen: handleSend - Generate error:', responseError.message);
+      console.error('ChatScreen: Generate error:', responseError.message);
       setError(responseError.message);
       setAppStatus('ERROR');
       return;
@@ -101,39 +94,37 @@ export default function ChatScreen() {
       createdAt: new Date().toISOString(),
     };
 
-    console.log('ChatScreen: handleSend - Adding model message to session');
     addMessageToSession(activeSessionId, modelMessage);
-    console.log('ChatScreen: handleSend - Setting appStatus to IDLE');
     setAppStatus('IDLE');
   };
 
   if (!activeModel || !modelState) {
     return (
-      <ThemedView className="flex-1 justify-center items-center">
-        <ThemedText>Please select a model to start chatting.</ThemedText>
-        <Button title="Select Model" onPress={() => router.push('/models')} />
-      </ThemedView>
+      <View className="flex-1 justify-center items-center" style={{ backgroundColor: theme.colors.background }}>
+        <Text style={{ color: theme.colors.text }}>Please select a model to start chatting.</Text>
+        <Button title="Select Model" color={theme.colors.primary} onPress={() => router.push('/models')} />
+      </View>
     );
   }
 
   if (modelState.status === 'not_downloaded') {
     return (
-      <ThemedView className="flex-1 justify-center items-center">
-        <ThemedText>Model not downloaded.</ThemedText>
-      </ThemedView>
+      <View className="flex-1 justify-center items-center" style={{ backgroundColor: theme.colors.background }}>
+        <Text style={{ color: theme.colors.text }}>Model not downloaded.</Text>
+      </View>
     );
   }
 
   if (!activeSession) {
     return (
-        <ThemedView className="flex-1 justify-center items-center">
-            <ThemedText>Please select a session to start chatting.</ThemedText>
-        </ThemedView>
+        <View className="flex-1 justify-center items-center" style={{ backgroundColor: theme.colors.background }}>
+            <Text style={{ color: theme.colors.text }}>Please select a session to start chatting.</Text>
+        </View>
     );
   }
 
   return (
-    <ThemedView className="flex-1 justify-center items-center">
+    <View className="flex-1" style={{ backgroundColor: theme.colors.background }}>
       <FlatList
         data={messages}
         keyExtractor={(item) => item.id}
@@ -143,42 +134,45 @@ export default function ChatScreen() {
               item.role === 'user' ? 'self-end' : 'self-start'
             }`}
             style={{ 
-              backgroundColor: item.role === 'user' ? theme.accent : theme.card 
+              backgroundColor: item.role === 'user' ? theme.colors.primary : theme.colors.card 
             }}
           >
-            <ThemedText>{item.content}</ThemedText>
+            <Text style={{ color: item.role === 'user' ? theme.colors.background : theme.colors.text }}>
+              {item.content}
+            </Text>
           </View>
         )}
         className="flex-1 w-full p-2"
       />
       {(appStatus === 'GENERATING' || appStatus === 'LOADING_MODEL') && (
-        <ActivityIndicator size="large" color={theme.accent} className="my-2.5" />
+        <ActivityIndicator size="large" color={theme.colors.primary} className="my-2.5" />
       )}
       {appStatus === 'ERROR' && (
         <View 
           className="p-2.5 rounded-md m-2.5 items-center"
-          style={{ backgroundColor: theme.destructive }}
+          style={{ backgroundColor: theme.colors.notification }}
         >
-          <ThemedText style={{ color: theme.primaryForeground }} className="mb-1.5">
+          <Text style={{ color: theme.colors.background }} className="mb-1.5">
             {errorMessage}
-          </ThemedText>
+          </Text>
           <Button title="Clear" onPress={clearError} />
         </View>
       )}
       <View 
         className="flex-row p-2 border-t items-center w-full"
         style={{ 
-          borderColor: theme.card,
+          borderColor: theme.colors.border,
           paddingBottom: insets.bottom 
         }}
       >
         <TextInput
           placeholder="Type your message..."
-          placeholderTextColor={theme.mutedForeground}
+          placeholderTextColor={theme.colors.text + '60'}
           className="flex-1 mr-2 p-2.5 rounded-md border"
           style={{ 
-            borderColor: theme.input, 
-            color: theme.text 
+            borderColor: theme.colors.border, 
+            color: theme.colors.text,
+            backgroundColor: theme.colors.card
           }}
           value={inputText}
           onChangeText={setInputText}
@@ -186,11 +180,11 @@ export default function ChatScreen() {
         />
         <Button 
           title="Send" 
-          color={theme.accent} 
+          color={theme.colors.primary} 
           onPress={handleSend} 
           disabled={appStatus !== 'IDLE' || !isModelLoaded} 
         />
       </View>
-    </ThemedView>
+    </View>
   );
 }
