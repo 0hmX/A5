@@ -1,12 +1,16 @@
 import { Stack } from 'expo-router';
-import { useEffect } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import 'react-native-get-random-values';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ThemedView } from '../components/ThemedView';
 import useDbStore from '../store/dbStore';
 import useModelStore from '../store/modelStore';
+import { ActivityIndicator, View } from 'react-native';
+import LoadingGate from '../components/LoadingGate';
 
 export default function RootLayout() {
+  const [isAppInitialized, setIsAppInitialized] = useState(false);
+
   useEffect(() => {
     const initializeStores = async () => {
       const { init: initDb } = useDbStore.getState();
@@ -20,9 +24,15 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <ThemedView style={{ flex: 1 }}>
-        <Stack>
-          <Stack.Screen name="(drawer)" options={{ headerShown: false }} />
-        </Stack>
+        <Suspense fallback={<View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}><ActivityIndicator size="large" /></View>}>
+          <LoadingGate onInitialized={() => setIsAppInitialized(true)}>
+            {isAppInitialized && (
+              <Stack>
+                <Stack.Screen name="(drawer)" options={{ headerShown: false }} />
+              </Stack>
+            )}
+          </LoadingGate>
+        </Suspense>
       </ThemedView>
     </SafeAreaProvider>
   );

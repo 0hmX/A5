@@ -9,6 +9,7 @@ interface ModelStoreState {
     models: Record<string, ModelState>;
     downloadingModels: Record<string, number>;
     activeTaskHandle: number | null;
+    isInitialized: boolean;
     initializeModels: () => Promise<void>;
     loadModel: (modelName: string) => Promise<[boolean, null] | [null, Error]>;
     generate: (prompt: string) => Promise<[string | null, any | null]>;
@@ -22,6 +23,7 @@ const useModelStore = create<ModelStoreState>((set, get) => ({
     models: {},
     downloadingModels: {},
     activeTaskHandle: null,
+    isInitialized: false,
     initializeModels: async () => {
         console.log('ModelStore: Initializing models');
         const initialModels: Record<string, ModelState> = {};
@@ -35,7 +37,7 @@ const useModelStore = create<ModelStoreState>((set, get) => ({
                 status: isDownloaded ? 'downloaded' : 'not_downloaded',
             };
         }
-        set({ models: initialModels });
+        set({ models: initialModels, isInitialized: true });
     },
     loadModel: async (modelName) => {
         console.log(`ModelStore: Loading model ${modelName}`);

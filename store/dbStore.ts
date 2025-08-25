@@ -18,6 +18,7 @@ export type Message = {
 
 interface DbState {
   db: SQLite.SQLiteDatabase | null;
+  isInitialized: boolean;
   init: () => Promise<[boolean, null] | [null, Error]>;
   getAllSessions: () => Promise<[Session[], null] | [null, Error]>;
   createSession: (id: string, name: string) => Promise<[string, null] | [null, Error]>;
@@ -27,11 +28,12 @@ interface DbState {
   getModelStatus: (modelName: string) => Promise<[{ status: string, localPath: string | null } | null, Error | null]>;
   setModelStatus: (modelName: string, status: string, localPath: string | null) => Promise<[boolean, null] | [null, Error]>;
   getAllModelStatus: () => Promise<[{ modelName: string, status: string, localPath: string | null }[], Error | null]>;
-  deleteModel: (modelName: string) => Promise<[boolean, null] | [null, Error]>; // Added
+  deleteModel: (modelName: string) => Promise<[boolean, null] | [null, Error]>;
 }
 
 const useDbStore = create<DbState>((set, get) => ({
   db: null,
+  isInitialized: false,
   init: async () => {
     try {
       console.log('DB: Opening database...');
@@ -60,7 +62,7 @@ const useDbStore = create<DbState>((set, get) => ({
         );
       `);
       console.log('DB: Schema executed successfully.');
-      set({ db });
+      set({ db, isInitialized: true });
       return [true, null];
     } catch (error) {
       console.error('DB: Error during initDB:', error);
@@ -175,7 +177,7 @@ const useDbStore = create<DbState>((set, get) => ({
       return [[], error as Error];
     }
   },
-  deleteModel: async (modelName: string) => { // Added
+  deleteModel: async (modelName: string) => {
     const { db } = get();
     if (!db) {
       return [null, new Error('Database not initialized.')];
