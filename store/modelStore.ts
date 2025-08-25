@@ -25,54 +25,97 @@ const useModelStore = create<ModelStoreState>((set, get) => ({
     activeTaskHandle: null,
     isInitialized: false,
     initializeModels: async () => {
-        console.log('ModelStore: Initializing models');
+        console.log('ModelStore/initializeModels: Starting initialization');
         const initialModels: Record<string, ModelState> = {};
-        const { getModelStatus } = useDbStore.getState();
+        const { getModelStatus, deleteModel: deleteDbModel } = useDbStore.getState();
+        console.log('ModelStore/initializeModels: Got dbStore functions');
+
         for (const model of MODELS) {
+            console.log(`ModelStore/initializeModels: Processing model ${model.name}`);
             const [modelStatus, error] = await getModelStatus(model.name);
-            const isDownloaded = modelStatus?.status === 'downloaded';
-            console.log(`ModelStore: Model ${model.name} is ${isDownloaded ? 'downloaded' : 'not downloaded'}`);
+            console.log(`ModelStore/initializeModels: getModelStatus for ${model.name} returned:`, modelStatus, error);
+
+            let isDownloaded = modelStatus?.status === 'downloaded';
+            console.log(`ModelStore/initializeModels: Initial isDownloaded for ${model.name}: ${isDownloaded}`);
+
+            if (isDownloaded && modelStatus?.localPath) {
+                console.log(`ModelStore/initializeModels: Checking file existence at ${modelStatus.localPath}`);
+                try {
+                    const fileInfo = await FileSystem.getInfoAsync(modelStatus.localPath);
+                    console.log(`ModelStore/initializeModels: FileInfo for ${model.name}:`, fileInfo);
+                    isDownloaded = fileInfo.exists;
+                    if (!fileInfo.exists) {
+                        console.log(`ModelStore/initializeModels: File doesn't exist, deleting from DB`);
+                        await deleteDbModel(model.name);
+                        isDownloaded = false;
+                    }
+                } catch (fileCheckError) {
+                    console.log(`ModelStore/initializeModels: File check error for ${model.name}:`, fileCheckError);
+                    isDownloaded = false;
+                }
+            }
+
+            console.log(`ModelStore/initializeModels: Final status for ${model.name}: ${isDownloaded ? 'downloaded' : 'not_downloaded'}`);
             initialModels[model.name] = {
                 model,
                 status: isDownloaded ? 'downloaded' : 'not_downloaded',
             };
         }
+        console.log('ModelStore/initializeModels: Setting models state:', initialModels);
         set({ models: initialModels, isInitialized: true });
+        console.log('ModelStore/initializeModels: Initialization complete');
     },
     loadModel: async (modelName) => {
-        console.log(`ModelStore: Loading model ${modelName}`);
+        console.log(`ModelStore/loadModel: Starting to load model ${modelName}`);
         const { getModelStatus } = useDbStore.getState();
         const [modelStatus, error] = await getModelStatus(modelName);
+        console.log(`ModelStore/loadModel: Model status from DB:`, modelStatus, error);
+
         if (error || !modelStatus || modelStatus.status !== 'downloaded' || !modelStatus.localPath) {
+            console.log(`ModelStore/loadModel: Model not ready - error: ${error}, status: ${modelStatus?.status}, path: ${modelStatus?.localPath}`);
             return [null, new Error('Model not downloaded or local path not found.')];
         }
 
-        console.log(`ModelStore: Presanitization Loading in path: ${modelStatus.localPath}`);
-        modelStatus.localPath = modelStatus.localPath.replace("file://", "")
-        console.log(`ModelStore: Postsaitization Loading in path: ${modelStatus.localPath}`);
-        
+        console.log(`ModelStore/loadModel: Creating task with path: ${modelStatus.localPath}`);
+
         const [taskHandle, createTaskError] = await createTask({ modelPath: modelStatus.localPath });
+        console.log(`ModelStore/loadModel: createTask returned - handle: ${taskHandle}, error: ${createTaskError}`);
 
         if (createTaskError) {
+            console.log(`ModelStore/loadModel: Task creation failed with error: ${createTaskError}`);
             return [null, Error(createTaskError)];
         }
 
+        console.log(`ModelStore/loadModel: Setting activeTaskHandle to ${taskHandle}`);
         set({ activeTaskHandle: taskHandle });
+        const state = get();
+        console.log(`ModelStore/loadModel: Current activeTaskHandle after set: ${state.activeTaskHandle}`);
         return [true, null];
     },
     generate: async (prompt) => {
+        console.log(`ModelStore/generate: Starting generation with prompt: ${prompt}`);
         const { activeTaskHandle } = get();
-        if (!activeTaskHandle) {
+        console.log(`ModelStore/generate: Current activeTaskHandle: ${activeTaskHandle}`);
+
+        if (activeTaskHandle === null) {  // Changed from !activeTaskHandle
+            console.log('ModelStore/generate: No active task handle found');
             return [null, new Error('Model not loaded.')];
         }
-        return await generateResponse(activeTaskHandle, prompt);
+
+        console.log(`ModelStore/generate: Calling generateResponse with handle ${activeTaskHandle}`);
+        const result = await generateResponse(activeTaskHandle, prompt);
+        console.log('ModelStore/generate: generateResponse returned:', result);
+        return result;
     },
     downloadModel: async (model) => {
+        console.log(`ModelStore/downloadModel: Starting download for ${model.name}`);
         const { name, url } = model;
-        const localPath = FileSystem.documentDirectory + name;
+        const localPath = FileSystem.documentDirectory + name + ".task";
+        console.log(`ModelStore/downloadModel: Local path will be ${localPath}`);
         const { setModelStatus, setProgress } = get();
 
         setModelStatus(name, 'downloading');
+        console.log(`ModelStore/downloadModel: Set status to downloading`);
 
         const downloadResumable = FileSystem.createDownloadResumable(
             url,
@@ -80,40 +123,52 @@ const useModelStore = create<ModelStoreState>((set, get) => ({
             {},
             (downloadProgress) => {
                 const progress = downloadProgress.totalBytesWritten / downloadProgress.totalBytesExpectedToWrite;
+                console.log(`ModelStore/downloadModel: Progress for ${name}: ${progress}`);
                 setProgress(name, progress);
             }
         );
 
         try {
+            console.log(`ModelStore/downloadModel: Starting download`);
             const result = await downloadResumable.downloadAsync();
+            console.log(`ModelStore/downloadModel: Download result:`, result);
+
             if (result) {
-                console.log('Finished downloading to ', result.uri);
+                console.log(`ModelStore/downloadModel: Download successful to ${result.uri}`);
                 setModelStatus(name, 'downloaded');
                 const { setModelStatus: setDbModelStatus } = useDbStore.getState();
                 await setDbModelStatus(name, 'downloaded', result.uri);
+                console.log(`ModelStore/downloadModel: Updated DB status`);
                 return [true, null];
             } else {
+                console.log(`ModelStore/downloadModel: Download failed - no result`);
                 setModelStatus(name, 'error');
                 return [null, new Error('Download failed.')];
             }
         } catch (e) {
-            console.error(e);
+            console.log(`ModelStore/downloadModel: Download error:`, e);
             setModelStatus(name, 'error');
             return [null, e];
         }
     },
     deleteModel: async (modelName) => {
+        console.log(`ModelStore/deleteModel: Deleting model ${modelName}`);
         const { setModelStatus } = get();
         const { deleteModel: deleteDbModel } = useDbStore.getState();
         const [success, error] = await deleteDbModel(modelName);
+        console.log(`ModelStore/deleteModel: Delete result - success: ${success}, error:`, error);
+
         if (success) {
             setModelStatus(modelName, 'not_downloaded');
+            console.log(`ModelStore/deleteModel: Set status to not_downloaded`);
             return [true, null];
         } else {
+            console.log(`ModelStore/deleteModel: Delete failed`);
             return [null, error];
         }
     },
-    setModelStatus: (modelName, status) =>
+    setModelStatus: (modelName, status) => {
+        console.log(`ModelStore/setModelStatus: Setting ${modelName} to ${status}`);
         set((state) => {
             const newDownloadingModels = { ...state.downloadingModels };
             if (status === 'downloading') {
@@ -121,6 +176,7 @@ const useModelStore = create<ModelStoreState>((set, get) => ({
             } else {
                 delete newDownloadingModels[modelName];
             }
+            console.log(`ModelStore/setModelStatus: Updated downloadingModels:`, newDownloadingModels);
             return {
                 models: {
                     ...state.models,
@@ -128,14 +184,17 @@ const useModelStore = create<ModelStoreState>((set, get) => ({
                 },
                 downloadingModels: newDownloadingModels,
             };
-        }),
-    setProgress: (modelName, progress) =>
+        });
+    },
+    setProgress: (modelName, progress) => {
+        console.log(`ModelStore/setProgress: Setting ${modelName} progress to ${progress}`);
         set((state) => ({
             downloadingModels: {
                 ...state.downloadingModels,
                 [modelName]: progress,
             },
-        })),
+        }));
+    },
 }));
 
 export default useModelStore;

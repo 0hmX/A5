@@ -33,13 +33,41 @@ class ExpoA5MediapipeModule : Module() {
 
         AsyncFunction("createTask") { options: TaskOptions, promise: Promise ->
             try {
+                val normalizedPath = when {
+                    options.modelPath.startsWith("file://") -> {
+                        val uri = android.net.Uri.parse(options.modelPath)
+                        uri.path ?: options.modelPath.removePrefix("file://")
+                    }
+                    else -> options.modelPath
+                }
+                
+                val file = java.io.File(normalizedPath)
+                
+                if (!file.exists()) {
+                    promise.resolve(arrayOf(null, "Model file does not exist: $normalizedPath"))
+                    return@AsyncFunction
+                }
+                
+                if (!file.isFile) {
+                    promise.resolve(arrayOf(null, "Path is not a file: $normalizedPath"))
+                    return@AsyncFunction
+                }
+                
+                if (!file.canRead()) {
+                    promise.resolve(arrayOf(null, "Model file is not readable: $normalizedPath"))
+                    return@AsyncFunction
+                }
+                
+                val fileSizeMB = file.length() / (1024.0 * 1024.0)
+                if (fileSizeMB <= 10) {
+                    promise.resolve(arrayOf(null, "Model file is too small (${String.format("%.2f", fileSizeMB)} MB). Expected > 10 MB"))
+                    return@AsyncFunction
+                }
+                
                 val llmOptions = LlmInferenceOptions.builder()
-                    .setModelPath(options.modelPath)
+                    .setModelPath("/data/local/tmp/llm/1.task")
                     .setMaxTokens(options.maxTokens)
                     .setMaxTopK(options.topK)
-                    // Temperature and RandomSeed might not be available in the current API
-                    // .setTemperature(options.temperature)
-                    // .setRandomSeed(options.randomSeed)
                     .build()
 
                 val llmInference = LlmInference.createFromOptions(appContext.reactContext, llmOptions)

@@ -20,7 +20,7 @@ export default function ChatScreen() {
   console.log('ChatScreen: Rendering with activeSessionId:', activeSessionId);
 
   const theme = useTheme();
-  const insets = useSafeAreaInsets(); // Get safe area insets
+  const insets = useSafeAreaInsets();
 
   const styles = useMemo(() => StyleSheet.create({
   container: {
@@ -54,7 +54,7 @@ export default function ChatScreen() {
     borderColor: theme.card,
     alignItems: 'center',
     width: '100%',
-    paddingBottom: insets.bottom, // Apply bottom inset
+    paddingBottom: insets.bottom,
   },
   textInput: {
     flex: 1,
@@ -62,26 +62,27 @@ export default function ChatScreen() {
     padding: 10,
     borderRadius: 5,
     borderWidth: 1,
-    borderColor: theme.input, // Use themed input border
-    color: theme.text, // Use themed text color
+    borderColor: theme.input,
+    color: theme.text,
   },
   loading: {
     marginVertical: 10,
   },
   errorContainer: {
     padding: 10,
-    backgroundColor: theme.destructive, // Use themed destructive color
+    backgroundColor: theme.destructive,
     borderRadius: 5,
     margin: 10,
     alignItems: 'center',
   },
   errorText: {
-    color: theme.primaryForeground, // Use themed foreground color
+    color: theme.primaryForeground,
     marginBottom: 5,
   },
-}), [theme, insets]); // Add insets to dependency array
+}), [theme, insets]);
 
   const [inputText, setInputText] = useState('');
+  const [isModelLoaded, setIsModelLoaded] = useState(false); // New state to track model loading
   const modelState = activeModel ? models[activeModel] : null;
 
   useEffect(() => {
@@ -97,6 +98,7 @@ export default function ChatScreen() {
   useEffect(() => {
     const loadModelAsync = async () => {
       console.log('ChatScreen: loadModel useEffect triggered');
+      setIsModelLoaded(false); // Reset model loaded status
       if (!activeModel || !modelState || modelState.status !== 'downloaded') {
         console.log('ChatScreen: loadModel - Pre-conditions not met (activeModel, modelState, or status)');
         return;
@@ -114,6 +116,7 @@ export default function ChatScreen() {
       }
       console.log('ChatScreen: loadModel - Model loaded successfully, setting appStatus to IDLE');
       setAppStatus('IDLE');
+      setIsModelLoaded(true); // Set model loaded status to true
     };
     loadModelAsync();
   }, [activeModel, modelState, setAppStatus, setError, loadModel]);
@@ -123,7 +126,7 @@ export default function ChatScreen() {
 
   const handleSend = async () => {
     console.log('ChatScreen: handleSend started');
-    if (inputText.trim().length === 0 || !activeModel || !activeSessionId || appStatus === 'LOADING_MODEL') {
+    if (inputText.trim().length === 0 || !activeModel || !activeSessionId || !isModelLoaded || appStatus === 'LOADING_MODEL') { // Added !isModelLoaded
       console.log('ChatScreen: handleSend - Pre-conditions not met (empty input, no model/session, or loading)');
       return;
     }
@@ -214,9 +217,9 @@ export default function ChatScreen() {
           style={styles.textInput}
           value={inputText}
           onChangeText={setInputText}
-          editable={appStatus === 'IDLE'}
+          editable={appStatus === 'IDLE' && isModelLoaded}
         />
-        <Button title="Send" color={theme.accent} onPress={handleSend} disabled={appStatus !== 'IDLE'} />
+        <Button title="Send" color={theme.accent} onPress={handleSend} disabled={appStatus !== 'IDLE' || !isModelLoaded} />
       </View>
     </ThemedView>
   );
