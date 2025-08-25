@@ -6,6 +6,7 @@ import { Stack } from 'expo-router';
 import { Suspense, useEffect, useState } from 'react';
 import { ActivityIndicator, View } from 'react-native';
 import 'react-native-get-random-values';
+import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 
@@ -36,17 +37,19 @@ export default function RootLayout() {
 
   return (
     <SafeAreaProvider>
-      <NavThemeProvider value={NAV_THEME[colorScheme]}>
-        <Suspense fallback={<View className="flex-1 justify-center items-center"><ActivityIndicator size="large" /></View>}>
-          <LoadingGate onInitialized={() => setIsAppInitialized(true)}>
-            {isAppInitialized && (
-              <Stack>
-                <Stack.Screen name="(drawer)" options={{ headerShown: false }} />
-              </Stack>
-            )}
-          </LoadingGate>
-        </Suspense>
-      </NavThemeProvider>
+      <KeyboardProvider>
+        <NavThemeProvider value={NAV_THEME[colorScheme]}>
+          <Suspense fallback={<View className="flex-1 justify-center items-center"><ActivityIndicator size="large" /></View>}>
+            <LoadingGate onInitialized={() => setIsAppInitialized(true)}>
+              {isAppInitialized && (
+                <Stack>
+                  <Stack.Screen name="(drawer)" options={{ headerShown: false }} />
+                </Stack>
+              )}
+            </LoadingGate>
+          </Suspense>
+        </NavThemeProvider>
+      </KeyboardProvider>
     </SafeAreaProvider>
   );
 }

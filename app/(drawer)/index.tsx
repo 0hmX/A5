@@ -1,3 +1,6 @@
+import { Button } from '@/components/nativewindui/Button';
+import { Text } from '@/components/nativewindui/Text';
+import { TextInput } from '@/components/Textinput';
 import { useTheme } from '@/hooks/useTheme';
 import useAppStatusStore from '@/store/appStatusStore';
 import useChatStore from '@/store/chatStore';
@@ -5,7 +8,7 @@ import useModelStore from '@/store/modelStore';
 import useSessionStore from '@/store/sessionStore';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Button, FlatList, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, FlatList, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -102,7 +105,9 @@ export default function ChatScreen() {
     return (
       <View className="flex-1 justify-center items-center" style={{ backgroundColor: theme.colors.background }}>
         <Text style={{ color: theme.colors.text }}>Please select a model to start chatting.</Text>
-        <Button title="Select Model" color={theme.colors.primary} onPress={() => router.push('/models')} />
+        <Button onPress={() => router.push('/models')}>
+          <Text>Select Model</Text>
+        </Button>
       </View>
     );
   }
@@ -155,35 +160,43 @@ export default function ChatScreen() {
           <Text style={{ color: theme.colors.background }} className="mb-1.5">
             {errorMessage}
           </Text>
-          <Button title="Clear" onPress={clearError} />
+          <Button onPress={clearError}>
+            <Text>Clear</Text>
+          </Button>
         </View>
       )}
       <View 
-        className="flex-row p-2 border-t items-center w-full"
+        className="flex-row gap-2 p-2 border-t items-center w-full"
         style={{ 
           borderColor: theme.colors.border,
-          paddingBottom: insets.bottom 
+          paddingBottom: insets.bottom + 8
         }}
       >
         <TextInput
           placeholder="Type your message..."
-          placeholderTextColor={theme.colors.text + '60'}
-          className="flex-1 mr-2 p-2.5 rounded-md border"
-          style={{ 
-            borderColor: theme.colors.border, 
-            color: theme.colors.text,
-            backgroundColor: theme.colors.card
-          }}
           value={inputText}
           onChangeText={setInputText}
+          onClear={() => setInputText('')}
           editable={appStatus === 'IDLE' && isModelLoaded}
+          returnKeyType="send"
+          onSubmitEditing={handleSend}
+          multiline
+          variant="default"
+          size="md"
+          containerClassName="flex-1 mb-0"
+          rightIcon={
+            appStatus === 'GENERATING' ? (
+              <ActivityIndicator size="small" color={theme.colors.primary} />
+            ) : undefined
+          }
         />
         <Button 
-          title="Send" 
-          color={theme.colors.primary} 
           onPress={handleSend} 
-          disabled={appStatus !== 'IDLE' || !isModelLoaded} 
-        />
+          disabled={appStatus !== 'IDLE' || !isModelLoaded || !inputText.trim()} 
+          size="md"
+        >
+          <Text>Send</Text>
+        </Button>
       </View>
     </View>
   );

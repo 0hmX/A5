@@ -1,12 +1,14 @@
+import { ProgressIndicator } from '@/components/ProgressIndicator';
+import { Text } from '@/components/nativewindui/Text';
 import { useTheme } from '@/hooks/useTheme';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Text, View } from 'react-native';
+import { View } from 'react-native';
 import Animated, {
-    useAnimatedStyle,
-    useSharedValue,
-    withRepeat,
-    withSequence,
-    withTiming
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withSequence,
+  withTiming
 } from 'react-native-reanimated';
 
 interface LoadingGateProps {
@@ -69,41 +71,47 @@ export default function LoadingGate({ onInitialized, children }: LoadingGateProp
     <View className="flex-1 justify-center items-center px-8" style={{ backgroundColor: theme.colors.background }}>
       <Animated.View style={animatedStyle} className="items-center">
         <Animated.View 
-          style={[pulseStyle, { backgroundColor: theme.colors.primary }]}
+          style={[pulseStyle, { backgroundColor: theme.colors.primary + '20' }]}
           className="w-20 h-20 rounded-full justify-center items-center mb-8"
         >
           <View 
             className="w-16 h-16 rounded-full justify-center items-center"
             style={{ backgroundColor: theme.colors.background }}
           >
-            <ActivityIndicator size="large" color={theme.colors.primary} />
+            <ProgressIndicator 
+              variant="circular" 
+              size="lg" 
+              progress={loadingProgress}
+              showPercentage
+            />
           </View>
         </Animated.View>
 
-        <Text className="text-2xl font-bold mb-2" style={{ color: theme.colors.text }}>
+        <Text variant="largeTitle" className="mb-2">
           a5 chat
         </Text>
         
         <Text 
-          className="text-base mb-8 text-center opacity-70"
-          style={{ color: theme.colors.text }}
+          variant="body"
+          color="secondary"
+          className="mb-8 text-center"
         >
           Initializing your AI experience
         </Text>
 
-        <View className="w-64 h-2 rounded-full mb-4" style={{ backgroundColor: theme.colors.border }}>
-          <View 
-            className="h-full rounded-full transition-all duration-300"
-            style={{ 
-              backgroundColor: theme.colors.primary,
-              width: `${Math.min(loadingProgress, 100)}%`
-            }}
+        <View className="w-64 mb-4">
+          <ProgressIndicator 
+            variant="linear" 
+            size="md" 
+            progress={loadingProgress}
+            className="mb-2"
           />
         </View>
 
         <Text 
-          className="text-sm opacity-60"
-          style={{ color: theme.colors.text }}
+          variant="subhead"
+          color="tertiary"
+          className="mb-8"
         >
           {loadingProgress < 30 && "Loading models..."}
           {loadingProgress >= 30 && loadingProgress < 70 && "Setting up database..."}
@@ -111,23 +119,12 @@ export default function LoadingGate({ onInitialized, children }: LoadingGateProp
           {loadingProgress >= 100 && "Ready!"}
         </Text>
 
-        <View className="absolute -inset-4">
-          <View className="flex-row justify-around items-center h-full">
-            {[0, 1, 2].map((i) => (
-              <Animated.View
-                key={i}
-                style={[
-                  pulseStyle,
-                  { 
-                    backgroundColor: theme.colors.primary,
-                    animationDelay: `${i * 200}ms`
-                  }
-                ]}
-                className="w-2 h-2 rounded-full opacity-50"
-              />
-            ))}
-          </View>
-        </View>
+        <ProgressIndicator 
+          variant="dots" 
+          size="md" 
+          indeterminate
+          className="mb-4"
+        />
       </Animated.View>
 
       <View className="absolute bottom-16 left-8 right-8">
@@ -135,17 +132,22 @@ export default function LoadingGate({ onInitialized, children }: LoadingGateProp
           {[0, 1, 2, 3].map((i) => (
             <View
               key={i}
-              className="w-16 h-1 rounded-full"
-              style={{ 
-                backgroundColor: i <= (loadingProgress / 25) ? theme.colors.primary : theme.colors.border 
-              }}
-            />
+              className="flex-1 h-1"
+            >
+              <ProgressIndicator 
+                variant="linear" 
+                size="sm" 
+                progress={i < (loadingProgress / 25) ? 100 : 0}
+                backgroundColor={theme.colors.border}
+              />
+            </View>
           ))}
         </View>
         
         <Text 
-          className="text-xs text-center opacity-50"
-          style={{ color: theme.colors.text }}
+          variant="caption1"
+          color="quarternary"
+          className="text-center"
         >
           Please wait while we prepare everything for you
         </Text>

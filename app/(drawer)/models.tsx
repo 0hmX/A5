@@ -1,3 +1,5 @@
+import { Button } from '@/components/nativewindui/Button';
+import { Text } from '@/components/nativewindui/Text';
 import { useModelManager } from '@/hooks/useModelManager';
 import { useTheme } from '@/hooks/useTheme';
 import useChatStore from '@/store/chatStore';
@@ -6,7 +8,7 @@ import useSessionStore from '@/store/sessionStore';
 import { ModelState } from '@/store/types';
 import { router } from "expo-router";
 import React, { useCallback, useEffect } from 'react';
-import { Button, SectionList, Text, View } from 'react-native';
+import { SectionList, View } from 'react-native';
 
 interface ModelItemProps {
   item: ModelState;
@@ -29,42 +31,46 @@ const ModelItem = React.memo<ModelItemProps>(({ item, isActive, onSetActive }) =
       <View className="ml-4 flex-row items-center">
         {status === 'downloaded' && !isActive && (
           <>
-            <Button title="Set Active" color={theme.colors.primary} onPress={() => {
+            <Button onPress={() => {
               if (item.status === 'downloaded') {
                 console.log(`ModelItem: Set Active pressed for ${item.model.name}`);
                 onSetActive(item.model.name);
               } else {
                 console.log(`ModelItem: Set Active pressed for ${item.model.name}, but item.status is ${item.status}`);
               }
-            }} />
-            <Button title="Delete" color={theme.colors.notification} onPress={() => {
+            }}>
+              <Text>Set Active</Text>
+            </Button>
+            <Button onPress={() => {
               console.log(`ModelItem: Delete pressed for ${item.model.name}`);
               deleteModel();
-            }} />
+            }}>
+              <Text>Delete</Text>
+            </Button>
           </>
         )}
         {status === 'downloaded' && isActive && (
           <>
             <Text className="font-bold" style={{ color: theme.colors.primary }}>Active</Text>
             <Button
-              title="Delete"
-              color={theme.colors.notification}
               onPress={() => {
                 console.log(`ModelItem: Delete pressed for active model ${item.model.name}`);
                 deleteModel();
               }}
-            />
+            >
+              <Text>Delete</Text>
+            </Button>
           </>
         )}
         {status === 'not_downloaded' && (
           <Button
-            title="Download"
-            color={theme.colors.primary}
             onPress={() => {
               console.log(`ModelItem: Download pressed for ${item.model.name}`);
               // @ts-ignore
               downloadModel({ name: item.model.name, url: item.model.links, status: 'not_downloaded', progress: 0, localPath: null, extension: item.model.extension });
-            }} />
+            }}>
+            <Text>Download</Text>
+          </Button>
         )}
         {status === 'downloading' && (
           <Text style={{ color: theme.colors.text }}>Downloading... {(progress * 100).toFixed(2)}%</Text>
