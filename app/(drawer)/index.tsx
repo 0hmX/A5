@@ -192,7 +192,7 @@ export default function ChatScreen() {
   }
 
   return (
-    <ThemedView style={styles.container}>
+    <ThemedView style={styles.container} className='flex bg-red-100'>
       <FlatList
         data={messages}
         keyExtractor={(item) => item.id}

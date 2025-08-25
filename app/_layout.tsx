@@ -1,12 +1,13 @@
 import { Stack } from 'expo-router';
 import { Suspense, useEffect, useState } from 'react';
+import { ActivityIndicator, View } from 'react-native';
 import 'react-native-get-random-values';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import LoadingGate from '../components/LoadingGate';
 import { ThemedView } from '../components/ThemedView';
+import "../global.css";
 import useDbStore from '../store/dbStore';
 import useModelStore from '../store/modelStore';
-import { ActivityIndicator, View } from 'react-native';
-import LoadingGate from '../components/LoadingGate';
 
 export default function RootLayout() {
   const [isAppInitialized, setIsAppInitialized] = useState(false);
