@@ -1,7 +1,8 @@
 type Common = {
     name: string,
     tags: string[],
-    backend: string
+    backend: string,
+    extension: string
 }
 
 export type Online = {
@@ -22,7 +23,8 @@ const MODELS: Models[] = [
         tags: ["int4", "super small"],
         backend: "mediapipe",
         links: "https://huggingface.co/cu8code/mediapipe/resolve/main/gemma3-1b-it-int4.task",
-        type: "online"
+        type: "online",
+        extension: "task"
     }
 ]
 

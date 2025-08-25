@@ -65,7 +65,7 @@ const ModelItem = React.memo<ModelItemProps>(({ item, isActive, onSetActive }) =
             onPress={() => {
               console.log(`ModelItem: Download pressed for ${item.model.name}`);
               // @ts-ignore
-              downloadModel({ name: item.model.name, url: item.model.links, status: 'not_downloaded', progress: 0, localPath: null });
+              downloadModel({ name: item.model.name, url: item.model.links, status: 'not_downloaded', progress: 0, localPath: null, extension: item.model.extension });
             }} />
         )}
         {status === 'downloading' && (

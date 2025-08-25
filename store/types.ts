@@ -34,4 +34,5 @@ export interface ModelDownloadInfo {
     status: 'not_downloaded' | 'downloading' | 'downloaded' | 'error';
     progress: number;
     localPath: string | null;
+    extension: string;
 }

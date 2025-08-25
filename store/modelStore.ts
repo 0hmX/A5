@@ -110,7 +110,7 @@ const useModelStore = create<ModelStoreState>((set, get) => ({
     downloadModel: async (model) => {
         console.log(`ModelStore/downloadModel: Starting download for ${model.name}`);
         const { name, url } = model;
-        const localPath = FileSystem.documentDirectory + name + ".task";
+        const localPath = FileSystem.documentDirectory + name + model.extension;
         console.log(`ModelStore/downloadModel: Local path will be ${localPath}`);
         const { setModelStatus, setProgress } = get();
 
