@@ -27,3 +27,11 @@ export type ChatSession = {
     updatedAt: string;
     history: ChatMessage[];
 };
+
+export interface ModelDownloadInfo {
+    name: string;
+    url: string;
+    status: 'not_downloaded' | 'downloading' | 'downloaded' | 'error';
+    progress: number;
+    localPath: string | null;
+}

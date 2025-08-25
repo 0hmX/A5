@@ -1,10 +1,10 @@
 import MODELS from '@/constants/Models';
-import ExpoLlmMediapipe from 'expo-llm-mediapipe';
 import { create } from 'zustand';
 import { v4 as uuidv4 } from 'uuid';
 import { AppStatus, ChatMessage, ChatSession, ModelState, ModelStatus } from './types';
 import serviceLocator from '../lib/di/ServiceLocator';
 import { DatabaseService } from '../services/DatabaseService';
+import useModelService from '../services/ModelService';
 
 interface AppState {
     appStatus: AppStatus;
@@ -43,11 +43,11 @@ const useAppStore = create<AppState>((set, get) => ({
     initializeModels: async () => {
         console.log('AppStore: Initializing models');
         const initialModels: Record<string, ModelState> = {};
+        const modelService = useModelService.getState();
         for (const model of MODELS) {
-            const sanitizedModelName = model.name.replace(/\//g, '-');
-            console.log(`AppStore: Checking if model ${sanitizedModelName} is downloaded`);
-            const isDownloaded = await ExpoLlmMediapipe.isModelDownloaded(sanitizedModelName);
-            console.log(`AppStore: Model ${sanitizedModelName} is ${isDownloaded ? 'downloaded' : 'not downloaded'}`);
+            const [localPath, error] = await modelService.getModelLocalPath(model.name);
+            const isDownloaded = localPath && !error;
+            console.log(`AppStore: Model ${model.name} is ${isDownloaded ? 'downloaded' : 'not downloaded'}`);
             initialModels[model.name] = {
                 model,
                 status: isDownloaded ? 'downloaded' : 'not_downloaded',

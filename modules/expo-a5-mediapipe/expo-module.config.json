@@ -1,0 +1,9 @@
+{
+  "platforms": ["android"],
+  "apple": {
+    "modules": ["ExpoA5MediapipeModule"]
+  },
+  "android": {
+    "modules": ["expo.modules.a5mediapipe.ExpoA5MediapipeModule"]
+  }
+}

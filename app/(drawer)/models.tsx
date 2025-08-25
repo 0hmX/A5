@@ -3,34 +3,31 @@ import { ThemedView } from '@/components/ThemedView';
 import { useTheme } from '@/hooks/useTheme';
 import useAppStore from '@/store/appStore';
 import { ModelState } from '@/store/types';
-import ExpoLlmMediapipe from 'expo-llm-mediapipe';
 import { router } from "expo-router";
 import React, { useCallback, useEffect } from 'react';
 import { Button, SectionList, StyleSheet, View } from 'react-native';
-import serviceLocator from '../../lib/di/ServiceLocator';
-import { LLMServiceManager } from '../../services/llm/LLMServiceManager';
+import { useModelManager } from '../../hooks/useModelManager';
 
 interface ModelItemProps {
   item: ModelState;
   isActive: boolean;
   onSetActive: (name: string) => void;
-  onDownload: (name: string) => void;
-  onDelete: (name: string) => void;
-  progress: number;
 }
 
-const ModelItem = React.memo<ModelItemProps>(({ item, isActive, onSetActive, onDownload, onDelete, progress }) => {
+const ModelItem = React.memo<ModelItemProps>(({ item, isActive, onSetActive }) => {
   const colors = useTheme();
-  console.log('ModelItem: Rendering', { item, isActive, progress });
+  const { status, progress, downloadModel, deleteModel } = useModelManager(item.model.name);
+
+  console.log('ModelItem: Rendering', { item, isActive, progress, status });
 
   return (
     <View style={[styles.modelCard, { backgroundColor: colors.card }]}>
       <View style={styles.modelInfo}>
         <ThemedText style={styles.modelName}>{item.model.name}</ThemedText>
-        <ThemedText style={[styles.modelStatus, { color: colors.mutedForeground }]}>{item.status.replace('_', ' ')}</ThemedText>
+        <ThemedText style={[styles.modelStatus, { color: colors.mutedForeground }]}>{status.replace('_', ' ')}</ThemedText>
       </View>
       <View style={styles.modelActions}>
-        {item.status === 'downloaded' && !isActive && (
+        {status === 'downloaded' && !isActive && (
           <>
             <Button title="Set Active" color={colors.accent} onPress={() => {
               console.log(`ModelItem: Set Active pressed for ${item.model.name}`);
@@ -38,11 +35,11 @@ const ModelItem = React.memo<ModelItemProps>(({ item, isActive, onSetActive, onD
             }} />
             <Button title="Delete" color={colors.destructive} onPress={() => {
               console.log(`ModelItem: Delete pressed for ${item.model.name}`);
-              onDelete(item.model.name);
+              deleteModel();
             }} />
           </>
         )}
-        {item.status === 'downloaded' && isActive && (
+        {status === 'downloaded' && isActive && (
           <>
             <ThemedText style={[styles.activeText, { color: colors.accent }]}>Active</ThemedText>
             <Button
@@ -50,21 +47,22 @@ const ModelItem = React.memo<ModelItemProps>(({ item, isActive, onSetActive, onD
               color={colors.destructive}
               onPress={() => {
                 console.log(`ModelItem: Delete pressed for active model ${item.model.name}`);
-                onDelete(item.model.name);
+                deleteModel();
               }}
             />
           </>
         )}
-        {item.status === 'not_downloaded' && (
+        {status === 'not_downloaded' && (
           <Button
             title="Download"
             color={colors.accent}
             onPress={() => {
               console.log(`ModelItem: Download pressed for ${item.model.name}`);
-              onDownload(item.model.name);
+              // @ts-ignore
+              downloadModel({ name: item.model.name, url: item.model.links, status: 'not_downloaded', progress: 0, localPath: null });
             }} />
         )}
-        {item.status === 'downloading' && (
+        {status === 'downloading' && (
           <ThemedText>Downloading... {progress.toFixed(2)}%</ThemedText>
         )}
       </View>
@@ -77,12 +75,8 @@ export default function ModelManagementScreen() {
   const {
     models,
     activeModel,
-    downloadingModels, // Changed from progress
     initializeModels,
     setActiveModel,
-    setModelStatus,
-    setProgress,
-    setError,
     activeSessionId,
     createNewSession,
   } = useAppStore();
@@ -91,16 +85,6 @@ export default function ModelManagementScreen() {
     console.log('ModelManagementScreen: Initializing models');
     initializeModels();
   }, [initializeModels]);
-
-  useEffect(() => {
-    // This effect ensures that if a download is in progress when the component mounts,
-    // the UI reflects this.
-    Object.keys(downloadingModels).forEach((modelName) => {
-      if (models[modelName] && models[modelName].status !== 'downloading') {
-        setModelStatus(modelName, 'downloading');
-      }
-    });
-  }, [downloadingModels, models, setModelStatus]);
 
   const handleSetActive = useCallback(async (name: string) => {
     console.log(`ModelManagementScreen: Setting active model to ${name}`);
@@ -117,46 +101,6 @@ export default function ModelManagementScreen() {
     }
   }, [activeSessionId, createNewSession, setActiveModel]);
 
-  const handleDownload = useCallback(async (modelName: string) => {
-    console.log(`ModelManagementScreen: Starting download for ${modelName}`);
-    const llmServiceManager = serviceLocator.get<LLMServiceManager>('LLMServiceManager');
-    const [llmService, serviceError] = await llmServiceManager.getService(modelName);
-
-    if (serviceError) {
-      console.log(`ModelManagementScreen: Service error: ${serviceError.message}`);
-      setError(serviceError.message);
-      return;
-    }
-
-    setModelStatus(modelName, 'downloading');
-    const [_, error] = await llmService.downloadModel(modelName, (p) => {
-      console.log(`ModelManagementScreen: Download progress for ${modelName}: ${p * 100}`);
-      setProgress(modelName, p * 100); // Pass modelName to setProgress
-    });
-
-    if (error) {
-      console.log(`ModelManagementScreen: Download error for ${modelName}: ${error.message}`);
-      setError(error.message);
-      setModelStatus(modelName, 'not_downloaded');
-    } else {
-      console.log(`ModelManagementScreen: Download successful for ${modelName}`);
-      setModelStatus(modelName, 'downloaded');
-    }
-  }, [setError, setModelStatus, setProgress]);
-
-  const handleDelete = useCallback(async (modelName: string) => {
-    console.log(`ModelManagementScreen: Deleting model ${modelName}`);
-    const sanitizedModelName = modelName.replace(/\//g, '-');
-    try {
-      await ExpoLlmMediapipe.deleteDownloadedModel(sanitizedModelName);
-      setModelStatus(modelName, 'not_downloaded');
-      console.log(`ModelManagementScreen: Deleted model ${modelName}`);
-    } catch (e: any) {
-      console.log(`ModelManagementScreen: Error deleting model ${modelName}: ${e.message}`);
-      setError(e.message);
-    }
-  }, [setError, setModelStatus]);
-
   const sections = [
     {
       title: 'Downloaded Models',
@@ -164,11 +108,11 @@ export default function ModelManagementScreen() {
     },
     {
       title: 'Available for Download',
-      data: Object.values(models).filter((m) => m.status !== 'downloaded' && !downloadingModels[m.model.name]),
+      data: Object.values(models).filter((m) => m.status === 'not_downloaded'),
     },
     {
       title: 'Downloading',
-      data: Object.values(models).filter((m) => downloadingModels[m.model.name]),
+      data: Object.values(models).filter((m) => m.status === 'downloading'),
     },
   ];
 
@@ -182,9 +126,6 @@ export default function ModelManagementScreen() {
             item={item}
             isActive={activeModel === item.model.name}
             onSetActive={handleSetActive}
-            onDownload={handleDownload}
-            onDelete={handleDelete}
-            progress={downloadingModels[item.model.name] || 0} // Get progress from downloadingModels
           />
         )}
         renderSectionHeader={({ section: { title, data } }) => {

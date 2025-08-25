@@ -44,7 +44,8 @@
     "react-navigation": "^5.0.0",
     "uuid": "^11.1.0",
     "zustand": "^5.0.8",
-    "react-native-get-random-values": "~1.11.0"
+    "react-native-get-random-values": "~1.11.0",
+    "expo-file-system": "~18.1.11"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",

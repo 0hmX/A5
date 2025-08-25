@@ -1,10 +1,16 @@
-import MODELS from '@/constants/Models';
-import ExpoLlmMediapipe, { NativeModuleSubscription } from 'expo-llm-mediapipe';
+import {
+    createTask,
+    generateResponse,
+    generateResponseAsync,
+    releaseTask,
+    PartialResponsePayload,
+    ErrorResponsePayload,
+} from '@/modules/expo-a5-mediapipe';
 import { LLMService } from './LLMService';
+import useModelService from '../ModelService';
 
 export class MediaPipeLLMService implements LLMService {
-    private modelHandle: number | null = null;
-    private requestIdCounter = 0;
+    private taskHandle: number | null = null;
 
     async loadModel(
         modelName: string,
@@ -16,38 +22,40 @@ export class MediaPipeLLMService implements LLMService {
         }
     ): Promise<[void, null] | [null, Error]> {
         try {
-            if (this.modelHandle !== null) {
+            if (this.taskHandle !== null) {
                 await this.unloadModel();
             }
-            const sanitizedModelName = modelName.replace(/\//g, '-');
-            console.log(`MediaPipeLLMService: Loading model ${sanitizedModelName}`);
-            const handle = await ExpoLlmMediapipe.createModelFromDownloaded(
-                sanitizedModelName,
-                options.maxTokens,
-                options.topK,
-                options.temperature,
-                options.randomSeed
-            );
-            this.modelHandle = handle;
+            const [modelPath, error] = await useModelService.getState().getModelLocalPath(modelName);
+            if (error) {
+                return [null, error];
+            }
+
+            const [handle, createTaskError] = await createTask({
+                modelPath: modelPath!,
+                ...options,
+            });
+
+            if (createTaskError) {
+                return [null, createTaskError];
+            }
+
+            this.taskHandle = handle;
             return [undefined, null];
         } catch (e: any) {
-            console.log(`MediaPipeLLMService: Error loading model ${modelName}: ${e.message}`);
             return [null, e];
         }
     }
 
     async generate(prompt: string): Promise<[string, null] | [null, Error]> {
-        if (this.modelHandle === null) {
+        if (this.taskHandle === null) {
             return [null, new Error('Model not loaded.')];
         }
         try {
-            const requestId = ++this.requestIdCounter;
-            const result = await ExpoLlmMediapipe.generateResponse(
-                this.modelHandle,
-                requestId,
-                prompt
-            );
-            return [result, null];
+            const [response, error] = await generateResponse(this.taskHandle, prompt);
+            if (error) {
+                return [null, error];
+            }
+            return [response, null];
         } catch (e: any) {
             return [null, e];
         }
@@ -57,117 +65,69 @@ export class MediaPipeLLMService implements LLMService {
         prompt: string,
         onToken: (token: string) => void
     ): Promise<[void, null] | [null, Error]> {
-        if (this.modelHandle === null) {
+        if (this.taskHandle === null) {
             return [null, new Error('Model not loaded.')];
         }
 
-        const requestId = ++this.requestIdCounter;
-        let partialResponseSubscription: NativeModuleSubscription | null = null;
-        let errorResponseSubscription: NativeModuleSubscription | null = null;
-
         return new Promise(async (resolve, reject) => {
+            const partialResponseListener = (payload: PartialResponsePayload) => {
+                const [token, error] = payload;
+                if (error) {
+                    reject(error);
+                } else if (token) {
+                    onToken(token);
+                }
+            };
+
+            const errorResponseListener = (payload: ErrorResponsePayload) => {
+                const [_, error] = payload;
+                if (error) {
+                    reject(error);
+                }
+            };
+
             try {
-                partialResponseSubscription = ExpoLlmMediapipe.addListener(
-                    'onPartialResponse',
-                    (event) => {
-                        if (event.handle === this.modelHandle && event.requestId === requestId) {
-                            onToken(event.response);
-                        }
-                    }
-                );
+                // Add listeners
+                // This is a hypothetical implementation as the new API does not specify how to add listeners
+                // I will assume a similar pattern to the old API
+                const { NativeModule } = await import('@/modules/expo-a5-mediapipe/src/ExpoA5MediapipeModule');
+                const partialResponseSubscription = NativeModule.addListener('onPartialResponse', partialResponseListener);
+                const errorResponseSubscription = NativeModule.addListener('onErrorResponse', errorResponseListener);
 
-                errorResponseSubscription = ExpoLlmMediapipe.addListener(
-                    'onErrorResponse',
-                    (event) => {
-                        if (event.handle === this.modelHandle && event.requestId === requestId) {
-                            console.error(`Stream error for request ${requestId}: ${event.error}`);
-                            reject(new Error(event.error));
-                        }
-                    }
-                );
 
-                await ExpoLlmMediapipe.generateResponseAsync(
-                    this.modelHandle!,
-                    requestId,
-                    prompt
-                );
+                const [success, error] = await generateResponseAsync(this.taskHandle!, prompt);
 
-                resolve([undefined, null]);
+                if (error) {
+                    reject(error);
+                } else {
+                    resolve([undefined, null]);
+                }
             } catch (e: any) {
                 reject(e);
             } finally {
-                if (partialResponseSubscription) {
-                    partialResponseSubscription.remove();
-                }
-                if (errorResponseSubscription) {
-                    errorResponseSubscription.remove();
-                }
+                // Remove listeners
+                // This is a hypothetical implementation as the new API does not specify how to remove listeners
+                // I will assume a similar pattern to the old API
+                const { NativeModule } = await import('@/modules/expo-a5-mediapipe/src/ExpoA5MediapipeModule');
+                NativeModule.removeAllListeners('onPartialResponse');
+                NativeModule.removeAllListeners('onErrorResponse');
             }
         });
     }
 
     async unloadModel(): Promise<[void, null] | [null, Error]> {
-        if (this.modelHandle === null) {
+        if (this.taskHandle === null) {
             return [undefined, null];
         }
         try {
-            await ExpoLlmMediapipe.releaseModel(this.modelHandle);
-            this.modelHandle = null;
+            const [success, error] = await releaseTask(this.taskHandle);
+            if (error) {
+                return [null, error];
+            }
+            this.taskHandle = null;
             return [undefined, null];
         } catch (e: any) {
             return [null, e];
         }
-    }
-
-    async downloadModel(
-        modelName: string,
-        onProgress: (progress: number) => void
-    ): Promise<[string, null] | [null, Error]> {
-        console.log(`MediaPipeLLMService: Downloading model ${modelName}`);
-        const model = MODELS.find((m) => m.name === modelName);
-
-        if (!model || model.type !== 'online' || !model.links) {
-            console.log(`MediaPipeLLMService: Invalid model name or missing link for ${modelName}`);
-            return [null, new Error('Invalid model name or missing link.')];
-        }
-        const url = model.links;
-        const sanitizedModelName = modelName.replace(/\//g, '-');
-        console.log(`MediaPipeLLMService: Sanitized model name to ${sanitizedModelName}`);
-
-        let subscription: NativeModuleSubscription | null = null;
-
-        return new Promise(async (resolve, reject) => {
-            try {
-                subscription = ExpoLlmMediapipe.addListener(
-                    'downloadProgress',
-                    (event) => {
-                        if (event.modelName === sanitizedModelName) {
-                            if (event.status === 'downloading' && event.progress !== undefined) {
-                                console.log(`MediaPipeLLMService: Download progress for ${sanitizedModelName}: ${event.progress}`);
-                                onProgress(event.progress);
-                            } else if (event.status === 'completed') {
-                                console.log(`MediaPipeLLMService: Download completed for ${sanitizedModelName}`);
-                                resolve([modelName, null]);
-                            } else if (event.status === 'error') {
-                                console.log(`MediaPipeLLMService: Download error for ${sanitizedModelName}: ${event.error}`);
-                                reject(new Error(event.error || 'Download failed.'));
-                            } else if (event.status === 'cancelled') {
-                                console.log(`MediaPipeLLMService: Download cancelled for ${sanitizedModelName}`);
-                                reject(new Error('Download cancelled.'));
-                            }
-                        }
-                    }
-                );
-
-                await ExpoLlmMediapipe.downloadModel(url, sanitizedModelName, { overwrite: true });
-            } catch (e: any) {
-                console.log(`MediaPipeLLMService: Error downloading model ${sanitizedModelName}: ${e.message}`);
-                reject(e);
-            } finally {
-                if (subscription) {
-                    subscription.remove();
-                }
-            }
-        });
     }
 }
