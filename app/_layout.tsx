@@ -14,8 +14,11 @@ import { NAV_THEME } from '@/constants/theme';
 import { useColorScheme, useInitialAndroidBarSync } from '@/lib/useColorScheme';
 import { ThemeProvider as NavThemeProvider } from '@react-navigation/native';
 
+import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+
+
 export {
-  // Catch any errors thrown by the Layout component.
   ErrorBoundary
 } from 'expo-router';
 
@@ -38,17 +41,21 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <KeyboardProvider>
-        <NavThemeProvider value={NAV_THEME[colorScheme]}>
-          <Suspense fallback={<View className="flex-1 justify-center items-center"><ActivityIndicator size="large" /></View>}>
-            <LoadingGate onInitialized={() => setIsAppInitialized(true)}>
-              {isAppInitialized && (
-                <Stack>
-                  <Stack.Screen name="(drawer)" options={{ headerShown: false }} />
-                </Stack>
-              )}
-            </LoadingGate>
-          </Suspense>
-        </NavThemeProvider>
+        <GestureHandlerRootView style={{ flex: 1 }}>
+          <BottomSheetModalProvider>
+            <NavThemeProvider value={NAV_THEME[colorScheme]}>
+              <Suspense fallback={<View className="flex-1 justify-center items-center"><ActivityIndicator size="large" /></View>}>
+                <LoadingGate onInitialized={() => setIsAppInitialized(true)}>
+                  {isAppInitialized && (
+                    <Stack>
+                      <Stack.Screen name="(drawer)" options={{ headerShown: false }} />
+                    </Stack>
+                  )}
+                </LoadingGate>
+              </Suspense>
+            </NavThemeProvider>
+          </BottomSheetModalProvider>
+        </ GestureHandlerRootView>
       </KeyboardProvider>
     </SafeAreaProvider>
   );

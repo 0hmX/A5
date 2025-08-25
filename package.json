@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@expo/vector-icons": "^14.1.0",
+    "@gorhom/bottom-sheet": "^5.2.3",
     "@react-navigation/bottom-tabs": "^7.3.10",
     "@react-navigation/drawer": "^7.5.7",
     "@react-navigation/elements": "^2.3.8",
@@ -51,6 +52,7 @@
     "react-native-reanimated": "~3.17.4",
     "react-native-safe-area-context": "^5.4.0",
     "react-native-screens": "~4.11.1",
+    "react-native-svg": "15.11.2",
     "react-native-uitextview": "^2.1.0-rc.0",
     "react-native-web": "~0.20.0",
     "react-native-webview": "13.13.5",
@@ -58,8 +60,7 @@
     "tailwind-merge": "^3.3.1",
     "tailwindcss": "^3.4.0",
     "uuid": "^11.1.0",
-    "zustand": "^5.0.8",
-    "react-native-svg": "15.11.2"
+    "zustand": "^5.0.8"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
