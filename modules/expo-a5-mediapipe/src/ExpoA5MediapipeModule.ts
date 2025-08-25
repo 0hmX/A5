@@ -2,10 +2,10 @@ import { requireNativeModule } from 'expo-modules-core';
 import type { TaskOptions } from './ExpoA5Mediapipe.types';
 
 type ExpoA5MediapipeModule = {
-  createTask(options: TaskOptions): Promise<[number | null, any | null]>;
-  generateResponse(taskHandle: number, prompt: string): Promise<[string | null, any | null]>;
-  generateResponseAsync(taskHandle: number, prompt: string): Promise<[boolean | null, any | null]>;
-  releaseTask(taskHandle: number): Promise<[boolean | null, any | null]>;
+  createTask(options: TaskOptions): Promise<[number, null] | [null, string]>;
+  generateResponse(taskHandle: number, prompt: string): Promise<[string, null] | [null, string]>;
+  generateResponseAsync(taskHandle: number, prompt: string): Promise<[boolean, null] | [null, string]>;
+  releaseTask(taskHandle: number): Promise<[boolean, null] | [null, string]>;
 };
 
 const mediapipeModule = requireNativeModule<ExpoA5MediapipeModule>('ExpoA5Mediapipe');

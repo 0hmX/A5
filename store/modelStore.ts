@@ -47,10 +47,14 @@ const useModelStore = create<ModelStoreState>((set, get) => ({
             return [null, new Error('Model not downloaded or local path not found.')];
         }
 
+        console.log(`ModelStore: Presanitization Loading in path: ${modelStatus.localPath}`);
+        modelStatus.localPath = modelStatus.localPath.replace("file://", "")
+        console.log(`ModelStore: Postsaitization Loading in path: ${modelStatus.localPath}`);
+        
         const [taskHandle, createTaskError] = await createTask({ modelPath: modelStatus.localPath });
 
         if (createTaskError) {
-            return [null, createTaskError];
+            return [null, Error(createTaskError)];
         }
 
         set({ activeTaskHandle: taskHandle });
