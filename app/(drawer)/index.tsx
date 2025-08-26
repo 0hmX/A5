@@ -1,20 +1,21 @@
+import { ModelSelector } from '@/components/ModelSelector';
 import { Button } from '@/components/nativewindui/Button';
 import { Text } from '@/components/nativewindui/Text';
 import { TextInput } from '@/components/TextInput';
 import { useTheme } from '@/hooks/useTheme';
 import useAppStatusStore from '@/store/appStatusStore';
 import useChatStore from '@/store/chatStore';
+import useDbStore from '@/store/dbStore';
 import useModelStore from '@/store/modelStore';
 import useSessionStore from '@/store/sessionStore';
-import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, FlatList, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { v4 as uuidv4 } from 'uuid';
 
 export default function ChatScreen() {
-  const { activeModel } = useChatStore();
-  const { models, loadModel, generate } = useModelStore();
+  const { activeModel, setActiveModel } = useChatStore();
+  const { models, isInitialized, loadModel, generate } = useModelStore();
   const { sessions, activeSessionId, addMessageToSession, initializeSessions } = useSessionStore();
   const { appStatus, setAppStatus, errorMessage, setError, clearError } = useAppStatusStore();
 
@@ -61,6 +62,39 @@ export default function ChatScreen() {
     loadModelAsync();
   }, [activeModel, modelState, setAppStatus, setError, loadModel]);
 
+  useEffect(() => {
+    const autoLoadModel = async () => {
+      if (activeModel || !isInitialized) {
+        return;
+      }
+
+      const downloadedModels = Object.values(models).filter(m => m.status === 'downloaded');
+      if (downloadedModels.length === 0) {
+        return;
+      }
+
+      const [lastUsedModelName, error] = await useDbStore.getState().getMostRecentlyUsedModel();
+
+      if (error) {
+        console.error("Failed to get most recently used model:", error);
+      }
+
+      const lastUsedModel = lastUsedModelName ? downloadedModels.find(m => m.model.name === lastUsedModelName) : undefined;
+
+      if (lastUsedModel) {
+        console.log('Auto-loading last used model:', lastUsedModel.model.name);
+        setActiveModel(lastUsedModel.model.name);
+      } else {
+        const randomIndex = Math.floor(Math.random() * downloadedModels.length);
+        const randomModel = downloadedModels[randomIndex];
+        console.log('Auto-loading random model:', randomModel.model.name);
+        setActiveModel(randomModel.model.name);
+      }
+    };
+
+    autoLoadModel();
+  }, [isInitialized, models, activeModel, setActiveModel]);
+
   const activeSession = sessions.find(s => s.id === activeSessionId);
   const messages = activeSession ? activeSession.history : [];
 
@@ -105,16 +139,14 @@ export default function ChatScreen() {
     setAppStatus('IDLE');
   };
 
-  if (!activeModel || !modelState) {
+  if (!modelState) {
     return (
       <View className="flex-1 justify-center items-center" style={{ backgroundColor: theme.colors.background }}>
-        <Text style={{ color: theme.colors.text }}>Please select a model to start chatting.</Text>
-        <Button onPress={() => router.push('/models')}>
-          <Text>Select Model</Text>
-        </Button>
+        <Text style={{ color: theme.colors.text }}>Model not downloaded.</Text>
       </View>
     );
   }
+
 
   if (modelState.status === 'not_downloaded') {
     return (
@@ -149,7 +181,7 @@ export default function ChatScreen() {
               {item.content}
             </Text>
             {item.role === 'model' && item.generationTimeMs && (
-              <Text style={{ color: theme.colors.mutedForeground, fontSize: 10, marginTop: 4 }}>
+              <Text style={{ color: theme.colors.background, fontSize: 10, marginTop: 4 }}>
                 Generated in {(item.generationTimeMs / 1000).toFixed(2)}s
               </Text>
             )}
@@ -174,37 +206,40 @@ export default function ChatScreen() {
         </View>
       )}
       <View
-        className="flex-row gap-2 p-2 border-t items-center w-full"
+        className="flex-col gap-2 p-2 border-t"
         style={{
           borderColor: theme.colors.border,
           paddingBottom: insets.bottom + 8
         }}
       >
-        <TextInput
-          placeholder="Type your message..."
-          value={inputText}
-          onChangeText={setInputText}
-          onClear={() => setInputText('')}
-          editable={appStatus === 'IDLE' && isModelLoaded}
-          returnKeyType="send"
-          onSubmitEditing={handleSend}
-          multiline
-          variant="default"
-          size="md"
-          containerClassName="flex-1 mb-0"
-          rightIcon={
-            appStatus === 'GENERATING' ? (
-              <ActivityIndicator size="small" color={theme.colors.primary} />
-            ) : undefined
-          }
-        />
-        <Button
-          onPress={handleSend}
-          disabled={appStatus !== 'IDLE' || !isModelLoaded || !inputText.trim()}
-          size="md"
-        >
-          <Text>Send</Text>
-        </Button>
+        <ModelSelector />
+        <View className="flex-row gap-2 items-center w-full">
+            <TextInput
+              placeholder="Type your message..."
+              value={inputText}
+              onChangeText={setInputText}
+              onClear={() => setInputText('')}
+              editable={appStatus === 'IDLE' && isModelLoaded}
+              returnKeyType="send"
+              onSubmitEditing={handleSend}
+              multiline
+              variant="default"
+              size="md"
+              containerClassName="flex-1 mb-0"
+              rightIcon={
+                appStatus === 'GENERATING' ? (
+                  <ActivityIndicator size="small" color={theme.colors.primary} />
+                ) : undefined
+              }
+            />
+            <Button
+              onPress={handleSend}
+              disabled={appStatus !== 'IDLE' || !isModelLoaded || !inputText.trim()}
+              size="md"
+            >
+              <Text>Send</Text>
+            </Button>
+        </View>
       </View>
     </View>
   );

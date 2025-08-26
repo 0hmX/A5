@@ -1,3 +1,4 @@
+
 import * as SQLite from 'expo-sqlite';
 import { create } from 'zustand';
 
@@ -29,6 +30,8 @@ interface DbState {
   setModelStatus: (modelName: string, status: string, localPath: string | null) => Promise<[boolean, null] | [null, Error]>;
   getAllModelStatus: () => Promise<[{ modelName: string, status: string, localPath: string | null }[], Error | null]>;
   deleteModel: (modelName: string) => Promise<[boolean, null] | [null, Error]>;
+  recordModelUsage: (modelName: string) => Promise<[boolean, null] | [null, Error]>;
+  getMostRecentlyUsedModel: () => Promise<[string | null, Error | null]>;
 }
 
 const useDbStore = create<DbState>((set, get) => ({
@@ -61,6 +64,10 @@ const useDbStore = create<DbState>((set, get) => ({
           modelName TEXT PRIMARY KEY,
           status TEXT NOT NULL,
           localPath TEXT
+        );
+        CREATE TABLE IF NOT EXISTS model_usage_history (
+          modelName TEXT PRIMARY KEY,
+          lastUsedAt TEXT NOT NULL
         );
       `);
       console.log('DB: Schema executed successfully.');
@@ -189,6 +196,35 @@ const useDbStore = create<DbState>((set, get) => ({
     try {
       const result = await db.runAsync('DELETE FROM model_status WHERE modelName = ?;', modelName);
       return [result.changes > 0, null];
+    } catch (error) {
+      return [null, error as Error];
+    }
+  },
+  recordModelUsage: async (modelName: string) => {
+    const { db } = get();
+    if (!db) {
+      return [null, new Error('Database not initialized.')];
+    }
+    try {
+      await db.runAsync(
+        "INSERT OR REPLACE INTO model_usage_history (modelName, lastUsedAt) VALUES (?, datetime('now', 'localtime'));",
+        modelName
+      );
+      return [true, null];
+    } catch (error) {
+      return [null, error as Error];
+    }
+  },
+  getMostRecentlyUsedModel: async () => {
+    const { db } = get();
+    if (!db) {
+      return [null, new Error('Database not initialized.')];
+    }
+    try {
+      const result = await db.getFirstAsync<{ modelName: string }>(
+        'SELECT modelName FROM model_usage_history ORDER BY lastUsedAt DESC LIMIT 1;'
+      );
+      return [result?.modelName || null, null];
     } catch (error) {
       return [null, error as Error];
     }
