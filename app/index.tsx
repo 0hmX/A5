@@ -12,9 +12,8 @@ import useChatStore from '@/store/chatStore';
 import useDbStore from '@/store/dbStore';
 import useModelStore from '@/store/modelStore';
 import useSessionStore from '@/store/sessionStore';
-import { router } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, FlatList, View, Pressable } from 'react-native';
+import { ActivityIndicator, FlatList, Pressable, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { v4 as uuidv4 } from 'uuid';
 
