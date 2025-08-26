@@ -1,14 +1,14 @@
+import { router } from 'expo-router';
+import React, { useCallback, useEffect } from 'react';
+import { SectionList, View } from 'react-native';
+
 import { Button } from '@/components/nativewindui/Button';
 import { Text } from '@/components/nativewindui/Text';
 import { useModelManager } from '@/hooks/useModelManager';
-import { useTheme } from '@/hooks/useTheme';
 import useChatStore from '@/store/chatStore';
 import useModelStore from '@/store/modelStore';
 import useSessionStore from '@/store/sessionStore';
 import { ModelState } from '@/store/types';
-import { router } from "expo-router";
-import React, { useCallback, useEffect } from 'react';
-import { SectionList, View } from 'react-native';
 
 interface ModelItemProps {
   item: ModelState;
@@ -17,63 +17,55 @@ interface ModelItemProps {
 }
 
 const ModelItem = React.memo<ModelItemProps>(({ item, isActive, onSetActive }) => {
-  const theme = useTheme();
   const { status, progress, downloadModel, deleteModel } = useModelManager(item.model.name);
 
-  console.log('ModelItem: Rendering', { item, isActive, progress, status });
-
   return (
-    <View className="flex-row justify-between items-center p-4 rounded-lg mb-3" style={{ backgroundColor: theme.colors.card }}>
+    <View className="bg-card flex-row justify-between items-center p-4 rounded-lg mb-3">
       <View className="flex-1">
-        <Text className="text-base font-bold" style={{ color: theme.colors.text }}>{item.model.name}</Text>
-        <Text className="text-xs capitalize opacity-60" style={{ color: theme.colors.text }}>{status.replace('_', ' ')}</Text>
+        <Text variant="body" className="font-bold text-foreground">{item.model.name}</Text>
+        <Text variant="caption" className="capitalize text-muted-foreground">{status.replace('_', ' ')}</Text>
       </View>
-      <View className="ml-4 flex-row items-center">
+
+      <View className="ml-4 flex-row items-center gap-2">
         {status === 'downloaded' && !isActive && (
           <>
-            <Button onPress={() => {
-              if (item.status === 'downloaded') {
-                console.log(`ModelItem: Set Active pressed for ${item.model.name}`);
-                onSetActive(item.model.name);
-              } else {
-                console.log(`ModelItem: Set Active pressed for ${item.model.name}, but item.status is ${item.status}`);
-              }
-            }}>
-              <Text>Set Active</Text>
+            <Button variant="ghost" size="sm" onPress={() => deleteModel()}>
+              Delete
             </Button>
-            <Button onPress={() => {
-              console.log(`ModelItem: Delete pressed for ${item.model.name}`);
-              deleteModel();
-            }}>
-              <Text>Delete</Text>
+            <Button variant="primary" size="sm" onPress={() => onSetActive(item.model.name)}>
+              Set Active
             </Button>
           </>
         )}
         {status === 'downloaded' && isActive && (
           <>
-            <Text className="font-bold" style={{ color: theme.colors.primary }}>Active</Text>
-            <Button
-              onPress={() => {
-                console.log(`ModelItem: Delete pressed for active model ${item.model.name}`);
-                deleteModel();
-              }}
-            >
-              <Text>Delete</Text>
+            <Text variant="body" className="font-bold text-primary">Active</Text>
+            <Button variant="ghost" size="sm" onPress={() => deleteModel()} className="ml-2">
+              Delete
             </Button>
           </>
         )}
         {status === 'not_downloaded' && (
           <Button
-            onPress={() => {
-              console.log(`ModelItem: Download pressed for ${item.model.name}`);
+            variant="primary"
+            size="sm"
+            onPress={() => downloadModel({
+              name: item.model.name,
               // @ts-ignore
-              downloadModel({ name: item.model.name, url: item.model.links, status: 'not_downloaded', progress: 0, localPath: null, extension: item.model.extension });
-            }}>
-            <Text>Download</Text>
+              url: item.model.links,
+              status: 'not_downloaded',
+              progress: 0,
+              localPath: null,
+              extension: item.model.extension
+            })}
+          >
+            Download
           </Button>
         )}
         {status === 'downloading' && (
-          <Text style={{ color: theme.colors.text }}>Downloading... {(progress * 100).toFixed(2)}%</Text>
+          <Text variant="caption" className="text-muted-foreground">
+            Downloading... {(progress * 100).toFixed(0)}%
+          </Text>
         )}
       </View>
     </View>
@@ -81,35 +73,25 @@ const ModelItem = React.memo<ModelItemProps>(({ item, isActive, onSetActive }) =
 });
 
 export default function ModelManagementScreen() {
-  console.log('ModelManagementScreen: Initialized');
-  const theme = useTheme();
   const { activeModel, setActiveModel } = useChatStore();
   const { models, initializeModels } = useModelStore();
   const { activeSessionId, createNewSession } = useSessionStore();
 
   useEffect(() => {
-    console.log('ModelManagementScreen: Initializing models');
     initializeModels();
   }, [initializeModels]);
 
   const handleSetActive = useCallback(async (name: string) => {
-    console.log(`ModelManagementScreen: Setting active model to ${name}`);
     setActiveModel(name);
-    let sessionId = activeSessionId;
-    if (!sessionId) {
-      console.log('ModelManagementScreen: No active session, creating a new one');
-      sessionId = await createNewSession();
-      console.log('ModelManagementScreen: createNewSession() has completed with id:', sessionId);
+    if (!activeSessionId) {
+      await createNewSession();
     }
-    if (sessionId) {
-      console.log('ModelManagementScreen: Navigating to / with sessionId:', sessionId);
-      router.push('/');
-    }
+    router.push('/');
   }, [activeSessionId, createNewSession, setActiveModel]);
 
   const sections = [
     {
-      title: 'Downloaded Models',
+      title: 'Active & Downloaded Models',
       data: Object.values(models).filter((m) => m.status === 'downloaded'),
     },
     {
@@ -123,7 +105,7 @@ export default function ModelManagementScreen() {
   ];
 
   return (
-    <View className="flex-1 p-4" style={{ backgroundColor: theme.colors.background }}>
+    <View className="flex-1 bg-background p-container">
       <SectionList
         sections={sections}
         keyExtractor={(item) => item.model.name}
@@ -138,8 +120,9 @@ export default function ModelManagementScreen() {
           if (data.length === 0) {
             return null;
           }
-          return <Text className="text-2xl font-bold mt-4 mb-2" style={{ color: theme.colors.text }}>{title}</Text>;
+          return <Text variant="subheading" className="mt-4 mb-2">{title}</Text>;
         }}
+        contentContainerStyle={{ paddingBottom: 16 }}
       />
     </View>
   );

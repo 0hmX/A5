@@ -9,7 +9,6 @@ import 'react-native-get-random-values';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
-
 import { NAV_THEME } from '@/constants/theme';
 import { useColorScheme, useInitialAndroidBarSync } from '@/lib/useColorScheme';
 import { ThemeProvider as NavThemeProvider } from '@react-navigation/native';

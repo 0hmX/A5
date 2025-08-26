@@ -1,3 +1,5 @@
+// tailwind.config.js
+
 const { hairlineWidth, platformSelect } = require('nativewind/theme');
 
 /** @type {import('tailwindcss').Config} */
@@ -42,8 +44,36 @@ module.exports = {
           foreground: withOpacity('card-foreground'),
         },
       },
+      
       borderWidth: {
         hairline: hairlineWidth(),
+      },
+      
+      fontSize: {
+        'display': ['2.5rem', { lineHeight: '3rem', fontWeight: '700' }],
+        'heading': ['2rem', { lineHeight: '2.5rem', fontWeight: '700' }],
+        'subheading': ['1.5rem', { lineHeight: '2rem', fontWeight: '600' }],
+        'body-lg': ['1.125rem', { lineHeight: '1.75rem', fontWeight: '400' }],
+        'body': ['1rem', { lineHeight: '1.5rem', fontWeight: '400' }],
+        'caption': ['0.875rem', { lineHeight: '1.25rem', fontWeight: '400' }],
+        'label': ['0.75rem', { lineHeight: '1rem', fontWeight: '500' }],
+      },
+      
+      spacing: {
+        '0': '0px',
+        '1': '4px',
+        '2': '8px',
+        '3': '12px',
+        '4': '16px',
+        '5': '20px',
+        '6': '24px',
+        '7': '28px',
+        '8': '32px',
+        '10': '40px',
+        '12': '48px',
+        '16': '64px',
+        'container': '16px', // Alias for standard container padding
+        'gutter': '24px',    // Alias for larger screen gutters
       },
     },
   },

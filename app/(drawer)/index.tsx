@@ -1,6 +1,6 @@
 import { Button } from '@/components/nativewindui/Button';
 import { Text } from '@/components/nativewindui/Text';
-import { TextInput } from '@/components/Textinput';
+import { TextInput } from '@/components/TextInput';
 import { useTheme } from '@/hooks/useTheme';
 import useAppStatusStore from '@/store/appStatusStore';
 import useChatStore from '@/store/chatStore';
@@ -122,9 +122,9 @@ export default function ChatScreen() {
 
   if (!activeSession) {
     return (
-        <View className="flex-1 justify-center items-center" style={{ backgroundColor: theme.colors.background }}>
-            <Text style={{ color: theme.colors.text }}>Please select a session to start chatting.</Text>
-        </View>
+      <View className="flex-1 justify-center items-center" style={{ backgroundColor: theme.colors.background }}>
+        <Text style={{ color: theme.colors.text }}>Please select a session to start chatting.</Text>
+      </View>
     );
   }
 
@@ -134,12 +134,11 @@ export default function ChatScreen() {
         data={messages}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
-          <View 
-            className={`p-3 rounded-lg mb-2 max-w-[80%] ${
-              item.role === 'user' ? 'self-end' : 'self-start'
-            }`}
-            style={{ 
-              backgroundColor: item.role === 'user' ? theme.colors.primary : theme.colors.card 
+          <View
+            className={`p-3 rounded-lg mb-2 max-w-[80%] ${item.role === 'user' ? 'self-end' : 'self-start'
+              }`}
+            style={{
+              backgroundColor: item.role === 'user' ? theme.colors.primary : theme.colors.card
             }}
           >
             <Text style={{ color: item.role === 'user' ? theme.colors.background : theme.colors.text }}>
@@ -153,7 +152,7 @@ export default function ChatScreen() {
         <ActivityIndicator size="large" color={theme.colors.primary} className="my-2.5" />
       )}
       {appStatus === 'ERROR' && (
-        <View 
+        <View
           className="p-2.5 rounded-md m-2.5 items-center"
           style={{ backgroundColor: theme.colors.notification }}
         >
@@ -165,9 +164,9 @@ export default function ChatScreen() {
           </Button>
         </View>
       )}
-      <View 
+      <View
         className="flex-row gap-2 p-2 border-t items-center w-full"
-        style={{ 
+        style={{
           borderColor: theme.colors.border,
           paddingBottom: insets.bottom + 8
         }}
@@ -190,9 +189,9 @@ export default function ChatScreen() {
             ) : undefined
           }
         />
-        <Button 
-          onPress={handleSend} 
-          disabled={appStatus !== 'IDLE' || !isModelLoaded || !inputText.trim()} 
+        <Button
+          onPress={handleSend}
+          disabled={appStatus !== 'IDLE' || !isModelLoaded || !inputText.trim()}
           size="md"
         >
           <Text>Send</Text>
