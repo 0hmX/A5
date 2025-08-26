@@ -1,4 +1,3 @@
-
 import { createTask, generateResponse } from '@/modules/expo-a5-mediapipe';
 import * as FileSystem from 'expo-file-system';
 import { create } from 'zustand';
@@ -10,6 +9,7 @@ interface ModelStoreState {
     models: Record<string, ModelState>;
     downloadingModels: Record<string, { progress: number; speedMbps: number | null }>;
     activeTaskHandle: number | null;
+    loadedModelName: string | null;
     isInitialized: boolean;
     modelLoadTimeMs: number | null;
     generationTimeMs: number | null;
@@ -26,6 +26,7 @@ const useModelStore = create<ModelStoreState>((set, get) => ({
     models: {},
     downloadingModels: {},
     activeTaskHandle: null,
+    loadedModelName: null,
     isInitialized: false,
     modelLoadTimeMs: null,
     generationTimeMs: null,
@@ -97,7 +98,7 @@ const useModelStore = create<ModelStoreState>((set, get) => ({
         }
 
         console.log(`ModelStore/loadModel: Setting activeTaskHandle to ${taskHandle}`);
-        set({ activeTaskHandle: taskHandle, modelLoadTimeMs: duration });
+        set({ activeTaskHandle: taskHandle, modelLoadTimeMs: duration, loadedModelName: modelName });
         const state = get();
         console.log(`ModelStore/loadModel: Current activeTaskHandle after set: ${state.activeTaskHandle}`);
         return [true, null];
@@ -186,13 +187,16 @@ const useModelStore = create<ModelStoreState>((set, get) => ({
     },
     deleteModel: async (modelName) => {
         console.log(`ModelStore/deleteModel: Deleting model ${modelName}`);
-        const { setModelStatus } = get();
+        const { setModelStatus, loadedModelName } = get();
         const { deleteModel: deleteDbModel } = useDbStore.getState();
         const [success, error] = await deleteDbModel(modelName);
         console.log(`ModelStore/deleteModel: Delete result - success: ${success}, error:`, error);
 
         if (success) {
             setModelStatus(modelName, 'not_downloaded');
+            if (modelName === loadedModelName) {
+                set({ activeTaskHandle: null, loadedModelName: null, modelLoadTimeMs: null });
+            }
             console.log(`ModelStore/deleteModel: Set status to not_downloaded`);
             return [true, null];
         } else {

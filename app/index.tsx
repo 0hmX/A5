@@ -18,7 +18,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 export default function ChatScreen() {
   const { activeModel, setActiveModel } = useChatStore();
-  const { models, isInitialized, loadModel, generate } = useModelStore();
+  const { models, isInitialized, loadedModelName, loadModel, generate } = useModelStore();
   const { sessions, activeSessionId, addMessageToSession, initializeSessions } = useSessionStore();
   const { appStatus, setAppStatus, errorMessage, setError, clearError } = useAppStatusStore();
 
@@ -43,6 +43,12 @@ export default function ChatScreen() {
 
   useEffect(() => {
     const loadModelAsync = async () => {
+      if (activeModel === loadedModelName) {
+        console.log('ChatScreen: loadModel - Model already loaded.');
+        setIsModelLoaded(true);
+        return;
+      }
+
       console.log('ChatScreen: loadModel useEffect triggered');
       setIsModelLoaded(false);
       if (!activeModel || !modelState || modelState.status !== 'downloaded') {
