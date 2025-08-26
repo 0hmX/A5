@@ -87,7 +87,7 @@ export default function ModelManagementScreen() {
     if (!activeSessionId) {
       await createNewSession();
     }
-    router.push('/');
+    router.back();
   }, [activeSessionId, createNewSession, setActiveModel]);
 
   const sections = [

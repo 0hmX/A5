@@ -53,14 +53,19 @@ export default function RootLayout() {
                         name="index"
                         options={{
                           title: "Chat",
-                          headerRight: () => (
+                          headerLeft: () => (
                             <Button variant="ghost" onPress={() => router.push('/sessionManager')}>
                               <Text>Sessions</Text>
                             </Button>
                           ),
+                          headerRight: () => (
+                            <Button variant="ghost" onPress={() => router.push('/models')}>
+                              <Text>Models</Text>
+                            </Button>
+                          ),
                         }}
                       />
-                      <Stack.Screen name="models" options={{ title: "Models" }} />
+                      <Stack.Screen name="models" options={{ title: "Models", presentation: "modal" }} />
                       <Stack.Screen name="sessionManager" options={{ title: "Sessions", presentation: "modal" }} />
                     </Stack>
                   )}

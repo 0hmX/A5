@@ -1,4 +1,6 @@
 
+import * as Clipboard from 'expo-clipboard';
+
 import { TypingIndicator } from '@/components/TypingIndicator';
 
 import { Button } from '@/components/nativewindui/Button';
@@ -177,7 +179,8 @@ export default function ChatScreen() {
         data={messages}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
-          <View
+                    <Pressable
+            onLongPress={() => Clipboard.setStringAsync(item.content)}
             className={`p-3 rounded-lg mb-2 max-w-[80%] ${item.role === 'user' ? 'self-end' : 'self-start'
               }`}
             style={{
@@ -187,12 +190,21 @@ export default function ChatScreen() {
             <Text style={{ color: item.role === 'user' ? theme.colors.background : theme.colors.text }}>
               {item.content}
             </Text>
-            {item.role === 'model' && item.generationTimeMs && (
-              <Text variant="caption" className="text-muted-foreground mt-1">
-                Generated in {(item.generationTimeMs / 1000).toFixed(2)}s
-              </Text>
+                        {item.role === 'model' && (
+              <View className="mt-2">
+                {item.modelName && (
+                  <Text variant="caption" className="text-muted-foreground">
+                    Model: {item.modelName}
+                  </Text>
+                )}
+                {item.generationTimeMs && (
+                  <Text variant="caption" className="text-muted-foreground">
+                    Generated in {(item.generationTimeMs / 1000).toFixed(2)}s
+                  </Text>
+                )}
+              </View>
             )}
-          </View>
+          </Pressable>
         )}
         className="flex-1 w-full p-2"
         contentContainerStyle={{ paddingBottom: 16 }}
@@ -221,11 +233,7 @@ export default function ChatScreen() {
           paddingBottom: insets.bottom + 8
         }}
       >
-                <Pressable onPress={() => router.push('/models')} className="self-start mb-1 p-1">
-          <Text variant="caption" className="text-muted-foreground">
-            {activeModel ? `Model: ${activeModel}` : 'No model selected. Tap to choose.'}
-          </Text>
-        </Pressable>
+                
         <View className="flex-row gap-2 items-center w-full">
             <TextInput
               placeholder="Type your message..."

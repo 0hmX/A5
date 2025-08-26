@@ -62,7 +62,8 @@
     "uuid": "^11.1.0",
     "zustand": "^5.0.8",
     "expo-battery": "~9.1.4",
-    "expo-device": "~7.1.4"
+    "expo-device": "~7.1.4",
+    "expo-clipboard": "~7.1.5"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
