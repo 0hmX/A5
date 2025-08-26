@@ -23,7 +23,7 @@ interface DbState {
   getAllSessions: () => Promise<[Session[], null] | [null, Error]>;
   createSession: (id: string, name: string) => Promise<[string, null] | [null, Error]>;
   getMessagesForSession: (sessionId: string) => Promise<[Message[], null] | [null, Error]>;
-  insertMessage: (id: string, sessionId: string, role: 'user' | 'model', content: string) => Promise<[string, null] | [null, Error]>;
+  insertMessage: (id: string, sessionId: string, role: 'user' | 'model', content: string, modelName?: string | null, generationTimeMs?: number | null) => Promise<[string, null] | [null, Error]>;
   deleteSession: (sessionId: string) => Promise<[boolean, null] | [null, Error]>;
   getModelStatus: (modelName: string) => Promise<[{ status: string, localPath: string | null } | null, Error | null]>;
   setModelStatus: (modelName: string, status: string, localPath: string | null) => Promise<[boolean, null] | [null, Error]>;
@@ -53,6 +53,8 @@ const useDbStore = create<DbState>((set, get) => ({
           role TEXT NOT NULL CHECK(role IN ('user', 'model')),
           content TEXT NOT NULL,
           createdAt TEXT DEFAULT (datetime('now', 'localtime')),
+          modelName TEXT,
+          generationTimeMs REAL,
           FOREIGN KEY (sessionId) REFERENCES sessions (id) ON DELETE CASCADE
         );
         CREATE TABLE IF NOT EXISTS model_status (
@@ -111,18 +113,20 @@ const useDbStore = create<DbState>((set, get) => ({
       return [null, error as Error];
     }
   },
-  insertMessage: async (id, sessionId, role, content) => {
+  insertMessage: async (id, sessionId, role, content, modelName, generationTimeMs) => {
     const { db } = get();
     if (!db) {
       return [null, new Error('Database not initialized.')];
     }
     try {
       await db.runAsync(
-        'INSERT INTO messages (id, sessionId, role, content) VALUES (?, ?, ?, ?);',
+        'INSERT INTO messages (id, sessionId, role, content, modelName, generationTimeMs) VALUES (?, ?, ?, ?, ?, ?);',
         id,
         sessionId,
         role,
-        content
+        content,
+        modelName,
+        generationTimeMs
       );
       return [id, null];
     } catch (error) {

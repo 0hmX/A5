@@ -1,3 +1,4 @@
+
 import { createTask, generateResponse } from '@/modules/expo-a5-mediapipe';
 import * as FileSystem from 'expo-file-system';
 import { create } from 'zustand';
@@ -7,16 +8,18 @@ import { ModelDownloadInfo, ModelState, ModelStatus } from './types';
 
 interface ModelStoreState {
     models: Record<string, ModelState>;
-    downloadingModels: Record<string, number>;
+    downloadingModels: Record<string, { progress: number; speedMbps: number | null }>;
     activeTaskHandle: number | null;
     isInitialized: boolean;
+    modelLoadTimeMs: number | null;
+    generationTimeMs: number | null;
     initializeModels: () => Promise<void>;
     loadModel: (modelName: string) => Promise<[boolean, null] | [null, Error]>;
     generate: (prompt: string) => Promise<[string | null, any | null]>;
     downloadModel: (model: ModelDownloadInfo) => Promise<[boolean | null, any | null]>;
     deleteModel: (modelName: string) => Promise<[boolean | null, any | null]>;
     setModelStatus: (modelName: string, status: ModelStatus) => void;
-    setProgress: (modelName: string, progress: number) => void;
+    setDownloadProgress: (modelName: string, progress: number, speedMbps: number | null) => void;
 }
 
 const useModelStore = create<ModelStoreState>((set, get) => ({
@@ -24,6 +27,8 @@ const useModelStore = create<ModelStoreState>((set, get) => ({
     downloadingModels: {},
     activeTaskHandle: null,
     isInitialized: false,
+    modelLoadTimeMs: null,
+    generationTimeMs: null,
     initializeModels: async () => {
         console.log('ModelStore/initializeModels: Starting initialization');
         const initialModels: Record<string, ModelState> = {};
@@ -77,17 +82,22 @@ const useModelStore = create<ModelStoreState>((set, get) => ({
         }
 
         console.log(`ModelStore/loadModel: Creating task with path: ${modelStatus.localPath}`);
+        const startTime = performance.now();
 
         const [taskHandle, createTaskError] = await createTask({ modelPath: modelStatus.localPath });
-        console.log(`ModelStore/loadModel: createTask returned - handle: ${taskHandle}, error: ${createTaskError}`);
+
+        const endTime = performance.now();
+        const duration = endTime - startTime;
+        console.log(`ModelStore/loadModel: Model loaded in ${duration.toFixed(2)} ms.`);
 
         if (createTaskError) {
             console.log(`ModelStore/loadModel: Task creation failed with error: ${createTaskError}`);
+            set({ modelLoadTimeMs: null });
             return [null, Error(createTaskError)];
         }
 
         console.log(`ModelStore/loadModel: Setting activeTaskHandle to ${taskHandle}`);
-        set({ activeTaskHandle: taskHandle });
+        set({ activeTaskHandle: taskHandle, modelLoadTimeMs: duration });
         const state = get();
         console.log(`ModelStore/loadModel: Current activeTaskHandle after set: ${state.activeTaskHandle}`);
         return [true, null];
@@ -103,7 +113,15 @@ const useModelStore = create<ModelStoreState>((set, get) => ({
         }
 
         console.log(`ModelStore/generate: Calling generateResponse with handle ${activeTaskHandle}`);
+        const startTime = performance.now();
+
         const result = await generateResponse(activeTaskHandle, prompt);
+
+        const endTime = performance.now();
+        const duration = endTime - startTime;
+        console.log(`ModelStore/generate: Generation finished in ${duration.toFixed(2)} ms.`);
+        set({ generationTimeMs: duration });
+
         console.log('ModelStore/generate: generateResponse returned:', result);
         return result;
     },
@@ -112,19 +130,34 @@ const useModelStore = create<ModelStoreState>((set, get) => ({
         const { name, url } = model;
         const localPath = FileSystem.documentDirectory + name + model.extension;
         console.log(`ModelStore/downloadModel: Local path will be ${localPath}`);
-        const { setModelStatus, setProgress } = get();
+        const { setModelStatus, setDownloadProgress } = get();
 
         setModelStatus(name, 'downloading');
         console.log(`ModelStore/downloadModel: Set status to downloading`);
+
+        let lastTimestamp = Date.now();
+        let lastBytesWritten = 0;
 
         const downloadResumable = FileSystem.createDownloadResumable(
             url,
             localPath,
             {},
             (downloadProgress) => {
+                const now = Date.now();
+                const timeDelta = now - lastTimestamp; // in ms
+                const bytesDelta = downloadProgress.totalBytesWritten - lastBytesWritten;
+                
+                let speedMbps = null;
+                if (timeDelta > 500) { // Only update speed every 500ms
+                    const speedBps = bytesDelta / (timeDelta / 1000); // bytes per second
+                    speedMbps = (speedBps * 8) / 1_000_000; // megabits per second
+                    lastTimestamp = now;
+                    lastBytesWritten = downloadProgress.totalBytesWritten;
+                }
+
                 const progress = downloadProgress.totalBytesWritten / downloadProgress.totalBytesExpectedToWrite;
-                console.log(`ModelStore/downloadModel: Progress for ${name}: ${progress}`);
-                setProgress(name, progress);
+                const currentSpeed = get().downloadingModels[name]?.speedMbps;
+                setDownloadProgress(name, progress, speedMbps === null ? currentSpeed : speedMbps);
             }
         );
 
@@ -172,7 +205,7 @@ const useModelStore = create<ModelStoreState>((set, get) => ({
         set((state) => {
             const newDownloadingModels = { ...state.downloadingModels };
             if (status === 'downloading') {
-                newDownloadingModels[modelName] = 0;
+                newDownloadingModels[modelName] = { progress: 0, speedMbps: null };
             } else {
                 delete newDownloadingModels[modelName];
             }
@@ -186,12 +219,11 @@ const useModelStore = create<ModelStoreState>((set, get) => ({
             };
         });
     },
-    setProgress: (modelName, progress) => {
-        console.log(`ModelStore/setProgress: Setting ${modelName} progress to ${progress}`);
+    setDownloadProgress: (modelName, progress, speedMbps) => {
         set((state) => ({
             downloadingModels: {
                 ...state.downloadingModels,
-                [modelName]: progress,
+                [modelName]: { progress, speedMbps },
             },
         }));
     },

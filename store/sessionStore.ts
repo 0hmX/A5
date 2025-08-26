@@ -112,7 +112,14 @@ const useSessionStore = create<SessionState>((set, get) => ({
     },
     addMessageToSession: async (sessionId: string, message: ChatMessage) => {
         const { insertMessage } = useDbStore.getState();
-        const [insertedId, error] = await insertMessage(message.id, sessionId, message.role, message.content);
+        const [insertedId, error] = await insertMessage(
+            message.id,
+            sessionId,
+            message.role,
+            message.content,
+            message.modelName,
+            message.generationTimeMs
+        );
         if (error) {
             // You might want to set an error state here
             return;

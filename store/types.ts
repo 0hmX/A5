@@ -18,6 +18,8 @@ export type ChatMessage = {
     id: string;
     role: 'user' | 'model';
     content: string;
+    modelName?: string | null;
+    generationTimeMs?: number | null;
 };
 
 export type ChatSession = {
@@ -36,3 +38,5 @@ export interface ModelDownloadInfo {
     localPath: string | null;
     extension: string;
 }
+
+export type BatteryState = 'unknown' | 'unplugged' | 'charging' | 'full';

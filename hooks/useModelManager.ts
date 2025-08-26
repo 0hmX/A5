@@ -5,13 +5,16 @@ export function useModelManager(modelName: string) {
     const { models, downloadingModels, downloadModel, deleteModel } = useModelStore();
 
     const model = models[modelName];
+    const downloadStatus = downloadingModels[modelName];
 
-    const status = downloadingModels[modelName] ? 'downloading' : model?.status || 'not_downloaded';
-    const progress = downloadingModels[modelName] || 0;
+    const status = downloadStatus ? 'downloading' : model?.status || 'not_downloaded';
+    const progress = downloadStatus?.progress || 0;
+    const speedMbps = downloadStatus?.speedMbps || null;
 
     return {
         status,
         progress,
+        speedMbps,
         downloadModel: (modelInfo: ModelDownloadInfo) => downloadModel(modelInfo),
         deleteModel: () => deleteModel(modelName),
     };

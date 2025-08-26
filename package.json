@@ -60,7 +60,9 @@
     "tailwind-merge": "^3.3.1",
     "tailwindcss": "^3.4.0",
     "uuid": "^11.1.0",
-    "zustand": "^5.0.8"
+    "zustand": "^5.0.8",
+    "expo-battery": "~9.1.4",
+    "expo-device": "~7.1.4"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",

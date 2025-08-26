@@ -17,7 +17,7 @@ interface ModelItemProps {
 }
 
 const ModelItem = React.memo<ModelItemProps>(({ item, isActive, onSetActive }) => {
-  const { status, progress, downloadModel, deleteModel } = useModelManager(item.model.name);
+  const { status, progress, speedMbps, downloadModel, deleteModel } = useModelManager(item.model.name);
 
   return (
     <View className="bg-card flex-row justify-between items-center p-4 rounded-lg mb-3">
@@ -65,6 +65,7 @@ const ModelItem = React.memo<ModelItemProps>(({ item, isActive, onSetActive }) =
         {status === 'downloading' && (
           <Text variant="caption" className="text-muted-foreground">
             Downloading... {(progress * 100).toFixed(0)}%
+            {speedMbps !== null ? ` (${speedMbps.toFixed(2)} Mbps)` : ''}
           </Text>
         )}
       </View>

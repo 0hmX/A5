@@ -90,11 +90,15 @@ export default function ChatScreen() {
       return;
     }
 
+    const generationTimeMs = useModelStore.getState().generationTimeMs;
+
     const modelMessage = {
       id: uuidv4(),
       role: 'model' as const,
       content: response as string,
       createdAt: new Date().toISOString(),
+      modelName: activeModel,
+      generationTimeMs: generationTimeMs,
     };
 
     addMessageToSession(activeSessionId, modelMessage);
@@ -144,6 +148,11 @@ export default function ChatScreen() {
             <Text style={{ color: item.role === 'user' ? theme.colors.background : theme.colors.text }}>
               {item.content}
             </Text>
+            {item.role === 'model' && item.generationTimeMs && (
+              <Text style={{ color: theme.colors.mutedForeground, fontSize: 10, marginTop: 4 }}>
+                Generated in {(item.generationTimeMs / 1000).toFixed(2)}s
+              </Text>
+            )}
           </View>
         )}
         className="flex-1 w-full p-2"
