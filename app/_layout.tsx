@@ -1,8 +1,10 @@
+import { Button } from '@/components/nativewindui/Button';
+import { Text } from '@/components/nativewindui/Text';
 import LoadingGate from '@/components/LoadingGate';
 import "@/global.css";
 import useDbStore from '@/store/dbStore';
 import useModelStore from '@/store/modelStore';
-import { Stack } from 'expo-router';
+import { router, Stack } from 'expo-router';
 import { Suspense, useEffect, useState } from 'react';
 import { ActivityIndicator, View } from 'react-native';
 import 'react-native-get-random-values';
@@ -47,7 +49,19 @@ export default function RootLayout() {
                 <LoadingGate onInitialized={() => setIsAppInitialized(true)}>
                   {isAppInitialized && (
                     <Stack>
-                      <Stack.Screen name="(drawer)" options={{ headerShown: false }} />
+                      <Stack.Screen
+                        name="index"
+                        options={{
+                          title: "Chat",
+                          headerRight: () => (
+                            <Button variant="ghost" onPress={() => router.push('/sessionManager')}>
+                              <Text>Sessions</Text>
+                            </Button>
+                          ),
+                        }}
+                      />
+                      <Stack.Screen name="models" options={{ title: "Models" }} />
+                      <Stack.Screen name="sessionManager" options={{ title: "Sessions", presentation: "modal" }} />
                     </Stack>
                   )}
                 </LoadingGate>

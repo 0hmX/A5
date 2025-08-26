@@ -32,6 +32,7 @@ const Sheet = React.forwardRef<
           borderColor: colors.grey5,
           borderTopStartRadius: 16,
           borderTopEndRadius: 16,
+          zIndex: 9999,
         }
       }
       handleIndicatorStyle={

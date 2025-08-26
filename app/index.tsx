@@ -1,4 +1,6 @@
-import { ModelSelector } from '@/components/ModelSelector';
+
+import { TypingIndicator } from '@/components/TypingIndicator';
+
 import { Button } from '@/components/nativewindui/Button';
 import { Text } from '@/components/nativewindui/Text';
 import { TextInput } from '@/components/TextInput';
@@ -8,8 +10,9 @@ import useChatStore from '@/store/chatStore';
 import useDbStore from '@/store/dbStore';
 import useModelStore from '@/store/modelStore';
 import useSessionStore from '@/store/sessionStore';
-import { useEffect, useState } from 'react';
-import { ActivityIndicator, FlatList, View } from 'react-native';
+import { router } from 'expo-router';
+import { useEffect, useRef, useState } from 'react';
+import { ActivityIndicator, FlatList, View, Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -27,6 +30,7 @@ export default function ChatScreen() {
   const [inputText, setInputText] = useState('');
   const [isModelLoaded, setIsModelLoaded] = useState(false);
   const modelState = activeModel ? models[activeModel] : null;
+  const flatListRef = useRef<FlatList>(null);
 
   useEffect(() => {
     console.log('ChatScreen: Initializing sessions');
@@ -115,6 +119,8 @@ export default function ChatScreen() {
     setInputText('');
     setAppStatus('GENERATING');
 
+    setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 100);
+
     const [response, responseError] = await generate(userMessage.content);
 
     if (responseError) {
@@ -139,16 +145,10 @@ export default function ChatScreen() {
     setAppStatus('IDLE');
   };
 
-  if (!modelState) {
-    return (
-      <View className="flex-1 justify-center items-center" style={{ backgroundColor: theme.colors.background }}>
-        <Text style={{ color: theme.colors.text }}>Model not downloaded.</Text>
-      </View>
-    );
-  }
+  
 
 
-  if (modelState.status === 'not_downloaded') {
+  if (!modelState || modelState.status === 'not_downloaded') {
     return (
       <View className="flex-1 justify-center items-center" style={{ backgroundColor: theme.colors.background }}>
         <Text style={{ color: theme.colors.text }}>Model not downloaded.</Text>
@@ -167,6 +167,7 @@ export default function ChatScreen() {
   return (
     <View className="flex-1" style={{ backgroundColor: theme.colors.background }}>
       <FlatList
+        ref={flatListRef}
         data={messages}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
@@ -181,15 +182,16 @@ export default function ChatScreen() {
               {item.content}
             </Text>
             {item.role === 'model' && item.generationTimeMs && (
-              <Text style={{ color: theme.colors.background, fontSize: 10, marginTop: 4 }}>
+              <Text variant="caption" className="text-muted-foreground mt-1">
                 Generated in {(item.generationTimeMs / 1000).toFixed(2)}s
               </Text>
             )}
           </View>
         )}
         className="flex-1 w-full p-2"
+        ListFooterComponent={appStatus === 'GENERATING' ? <TypingIndicator /> : null}
       />
-      {(appStatus === 'GENERATING' || appStatus === 'LOADING_MODEL') && (
+      {appStatus === 'LOADING_MODEL' && (
         <ActivityIndicator size="large" color={theme.colors.primary} className="my-2.5" />
       )}
       {appStatus === 'ERROR' && (
@@ -212,7 +214,11 @@ export default function ChatScreen() {
           paddingBottom: insets.bottom + 8
         }}
       >
-        <ModelSelector />
+                <Pressable onPress={() => router.push('/models')} className="self-start mb-1 p-1">
+          <Text variant="caption" className="text-muted-foreground">
+            {activeModel ? `Model: ${activeModel}` : 'No model selected. Tap to choose.'}
+          </Text>
+        </Pressable>
         <View className="flex-row gap-2 items-center w-full">
             <TextInput
               placeholder="Type your message..."
@@ -226,11 +232,7 @@ export default function ChatScreen() {
               variant="default"
               size="md"
               containerClassName="flex-1 mb-0"
-              rightIcon={
-                appStatus === 'GENERATING' ? (
-                  <ActivityIndicator size="small" color={theme.colors.primary} />
-                ) : undefined
-              }
+              
             />
             <Button
               onPress={handleSend}
