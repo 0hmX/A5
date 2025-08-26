@@ -1,4 +1,3 @@
-
 import * as Clipboard from 'expo-clipboard';
 
 import { TypingIndicator } from '@/components/TypingIndicator';
@@ -13,7 +12,7 @@ import useDbStore from '@/store/dbStore';
 import useModelStore from '@/store/modelStore';
 import useSessionStore from '@/store/sessionStore';
 import { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, FlatList, Pressable, View } from 'react-native';
+import { ActivityIndicator, FlatList, KeyboardAvoidingView, Platform, Pressable, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -152,7 +151,7 @@ export default function ChatScreen() {
     setAppStatus('IDLE');
   };
 
-  
+
 
 
   if (!modelState || modelState.status === 'not_downloaded') {
@@ -172,68 +171,73 @@ export default function ChatScreen() {
   }
 
   return (
-    <View className="flex-1" style={{ backgroundColor: theme.colors.background }}>
-      <FlatList
-        ref={flatListRef}
-        data={messages}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-                    <Pressable
-            onLongPress={() => Clipboard.setStringAsync(item.content)}
-            className={`p-3 rounded-lg mb-2 max-w-[80%] ${item.role === 'user' ? 'self-end' : 'self-start'
-              }`}
-            style={{
-              backgroundColor: item.role === 'user' ? theme.colors.primary : theme.colors.card
-            }}
-          >
-            <Text style={{ color: item.role === 'user' ? theme.colors.background : theme.colors.text }}>
-              {item.content}
-            </Text>
-                        {item.role === 'model' && (
-              <View className="mt-2">
-                {item.modelName && (
-                  <Text variant="caption" className="text-muted-foreground">
-                    Model: {item.modelName}
-                  </Text>
-                )}
-                {item.generationTimeMs && (
-                  <Text variant="caption" className="text-muted-foreground">
-                    Generated in {(item.generationTimeMs / 1000).toFixed(2)}s
-                  </Text>
-                )}
-              </View>
-            )}
-          </Pressable>
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === "ios" ? "padding" : "padding"}
+      keyboardVerticalOffset={40}
+    >
+      <View className="flex-1" style={{ backgroundColor: theme.colors.background }}>
+        <FlatList
+          ref={flatListRef}
+          data={messages}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => (
+            <Pressable
+              onLongPress={() => Clipboard.setStringAsync(item.content)}
+              className={`p-3 rounded-lg mb-2 max-w-[80%] ${item.role === 'user' ? 'self-end' : 'self-start'
+                }`}
+              style={{
+                backgroundColor: item.role === 'user' ? theme.colors.primary : theme.colors.card
+              }}
+            >
+              <Text style={{ color: item.role === 'user' ? theme.colors.background : theme.colors.text }}>
+                {item.content}
+              </Text>
+              {item.role === 'model' && (
+                <View className="mt-2">
+                  {item.modelName && (
+                    <Text variant="caption" className="text-muted-foreground">
+                      Model: {item.modelName}
+                    </Text>
+                  )}
+                  {item.generationTimeMs && (
+                    <Text variant="caption" className="text-muted-foreground">
+                      Generated in {(item.generationTimeMs / 1000).toFixed(2)}s
+                    </Text>
+                  )}
+                </View>
+              )}
+            </Pressable>
+          )}
+          className="flex-1 w-full p-2"
+          contentContainerStyle={{ paddingBottom: 16 }}
+          ListFooterComponent={appStatus === 'GENERATING' ? <TypingIndicator /> : null}
+        />
+        {appStatus === 'LOADING_MODEL' && (
+          <ActivityIndicator size="large" color={theme.colors.primary} className="my-2.5" />
         )}
-        className="flex-1 w-full p-2"
-        contentContainerStyle={{ paddingBottom: 16 }}
-        ListFooterComponent={appStatus === 'GENERATING' ? <TypingIndicator /> : null}
-      />
-      {appStatus === 'LOADING_MODEL' && (
-        <ActivityIndicator size="large" color={theme.colors.primary} className="my-2.5" />
-      )}
-      {appStatus === 'ERROR' && (
+        {appStatus === 'ERROR' && (
+          <View
+            className="p-2.5 rounded-md m-2.5 items-center"
+            style={{ backgroundColor: theme.colors.notification }}
+          >
+            <Text style={{ color: theme.colors.background }} className="mb-1.5">
+              {errorMessage}
+            </Text>
+            <Button onPress={clearError}>
+              <Text>Clear</Text>
+            </Button>
+          </View>
+        )}
         <View
-          className="p-2.5 rounded-md m-2.5 items-center"
-          style={{ backgroundColor: theme.colors.notification }}
+          className="flex-col gap-2 p-2 border-t"
+          style={{
+            borderColor: theme.colors.border,
+            paddingBottom: insets.bottom + 8
+          }}
         >
-          <Text style={{ color: theme.colors.background }} className="mb-1.5">
-            {errorMessage}
-          </Text>
-          <Button onPress={clearError}>
-            <Text>Clear</Text>
-          </Button>
-        </View>
-      )}
-      <View
-        className="flex-col gap-2 p-2 border-t"
-        style={{
-          borderColor: theme.colors.border,
-          paddingBottom: insets.bottom + 8
-        }}
-      >
-                
-        <View className="flex-row gap-2 items-center w-full">
+
+          <View className="flex-row gap-2 items-center w-full">
             <TextInput
               placeholder="Type your message..."
               value={inputText}
@@ -246,7 +250,7 @@ export default function ChatScreen() {
               variant="default"
               size="md"
               containerClassName="flex-1 mb-0"
-              
+              autoFocus={true}
             />
             <Button
               onPress={handleSend}
@@ -255,8 +259,9 @@ export default function ChatScreen() {
             >
               <Text>Send</Text>
             </Button>
+          </View>
         </View>
       </View>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
