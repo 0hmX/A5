@@ -5,10 +5,10 @@ import { VariantProps, cva } from 'class-variance-authority';
 import { cssInterop } from 'nativewind';
 import * as React from 'react';
 import {
-    TextInput as RNTextInput,
-    TextInputProps as RNTextInputProps,
-    TouchableOpacity,
-    View,
+  TextInput as RNTextInput,
+  TextInputProps as RNTextInputProps,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { Text } from './nativewindui/Text';
 
@@ -105,8 +105,7 @@ const TextInput = React.forwardRef<RNTextInput, TextInputProps>(
       <View className={cn('mb-4', containerClassName)}>
         {label && (
           <Text
-            variant="subhead"
-            color={error ? 'primary' : 'secondary'}
+            variant="heading"
             className={cn('mb-1', error && 'text-destructive')}
           >
             {label}
@@ -151,7 +150,7 @@ const TextInput = React.forwardRef<RNTextInput, TextInputProps>(
           
           {showClear && value && onClear && editable && (
             <TouchableOpacity onPress={onClear} className="ml-2 p-1">
-              <Text variant="body" color="tertiary">✕</Text>
+              <Text variant="body">✕</Text>
             </TouchableOpacity>
           )}
           
@@ -160,7 +159,7 @@ const TextInput = React.forwardRef<RNTextInput, TextInputProps>(
         
         {error && (
           <Text
-            variant="caption1"
+            variant="caption"
             className="mt-1 text-destructive"
           >
             {error}
@@ -169,8 +168,7 @@ const TextInput = React.forwardRef<RNTextInput, TextInputProps>(
         
         {helper && !error && (
           <Text
-            variant="caption1"
-            color="tertiary"
+            variant="caption"
             className="mt-1"
           >
             {helper}
