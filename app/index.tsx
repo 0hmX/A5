@@ -195,6 +195,7 @@ export default function ChatScreen() {
           </View>
         )}
         className="flex-1 w-full p-2"
+        contentContainerStyle={{ paddingBottom: 16 }}
         ListFooterComponent={appStatus === 'GENERATING' ? <TypingIndicator /> : null}
       />
       {appStatus === 'LOADING_MODEL' && (
