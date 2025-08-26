@@ -1,6 +1,5 @@
 import { ProgressIndicator } from '@/components/ProgressIndicator';
 import { Text } from '@/components/nativewindui/Text';
-import { useTheme } from '@/hooks/useTheme';
 import { useEffect, useState } from 'react';
 import { View } from 'react-native';
 import Animated, {
@@ -19,8 +18,7 @@ interface LoadingGateProps {
 export default function LoadingGate({ onInitialized, children }: LoadingGateProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [loadingProgress, setLoadingProgress] = useState(0);
-  const theme = useTheme();
-  
+
   const opacity = useSharedValue(0);
   const scale = useSharedValue(0.8);
   const pulseOpacity = useSharedValue(0.5);
@@ -52,7 +50,7 @@ export default function LoadingGate({ onInitialized, children }: LoadingGateProp
     }, 200);
 
     return () => clearInterval(progressInterval);
-  }, []);
+  }, [onInitialized]);
 
   const animatedStyle = useAnimatedStyle(() => ({
     opacity: opacity.value,
@@ -68,15 +66,14 @@ export default function LoadingGate({ onInitialized, children }: LoadingGateProp
   }
 
   return (
-    <View className="flex-1 justify-center items-center px-8" style={{ backgroundColor: theme.colors.background }}>
+    <View className="flex-1 justify-center items-center bg-background px-8">
       <Animated.View style={animatedStyle} className="items-center">
         <Animated.View 
-          style={[pulseStyle, { backgroundColor: theme.colors.primary + '20' }]}
-          className="w-20 h-20 rounded-full justify-center items-center mb-8"
+          style={pulseStyle}
+          className="w-20 h-20 rounded-full justify-center items-center mb-8 bg-primary/20"
         >
           <View 
-            className="w-16 h-16 rounded-full justify-center items-center"
-            style={{ backgroundColor: theme.colors.background }}
+            className="w-16 h-16 rounded-full justify-center items-center bg-background"
           >
             <ProgressIndicator 
               variant="circular" 
@@ -87,14 +84,13 @@ export default function LoadingGate({ onInitialized, children }: LoadingGateProp
           </View>
         </Animated.View>
 
-        <Text variant="largeTitle" className="mb-2">
+        <Text variant="display" className="mb-2">
           a5 chat
         </Text>
         
         <Text 
           variant="body"
-          color="secondary"
-          className="mb-8 text-center"
+          className="mb-8 text-center text-muted-foreground"
         >
           Initializing your AI experience
         </Text>
@@ -109,9 +105,8 @@ export default function LoadingGate({ onInitialized, children }: LoadingGateProp
         </View>
 
         <Text 
-          variant="subhead"
-          color="tertiary"
-          className="mb-8"
+          variant="caption"
+          className="mb-8 text-muted-foreground"
         >
           {loadingProgress < 30 && "Loading models..."}
           {loadingProgress >= 30 && loadingProgress < 70 && "Setting up database..."}
@@ -138,16 +133,14 @@ export default function LoadingGate({ onInitialized, children }: LoadingGateProp
                 variant="linear" 
                 size="sm" 
                 progress={i < (loadingProgress / 25) ? 100 : 0}
-                backgroundColor={theme.colors.border}
               />
             </View>
           ))}
         </View>
         
         <Text 
-          variant="caption1"
-          color="quarternary"
-          className="text-center"
+          variant="caption"
+          className="text-center text-muted-foreground/50"
         >
           Please wait while we prepare everything for you
         </Text>

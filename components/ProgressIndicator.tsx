@@ -4,10 +4,10 @@ import { VariantProps, cva } from 'class-variance-authority';
 import { cssInterop } from 'nativewind';
 import * as React from 'react';
 import {
-    Animated,
-    ActivityIndicator as RNActivityIndicator,
-    View,
-    ViewProps,
+  Animated,
+  ActivityIndicator as RNActivityIndicator,
+  View,
+  ViewProps,
 } from 'react-native';
 
 import { Text } from '@/components/nativewindui/Text';
@@ -85,8 +85,6 @@ interface ProgressIndicatorProps extends ViewProps, VariantProps<typeof progress
   progress?: number;
   indeterminate?: boolean;
   showPercentage?: boolean;
-  color?: string;
-  backgroundColor?: string;
   animationDuration?: number;
 }
 
@@ -99,8 +97,6 @@ const ProgressIndicator = React.forwardRef<View, ProgressIndicatorProps>(
       progress = 0,
       indeterminate = false,
       showPercentage = false,
-      color,
-      backgroundColor,
       animationDuration = 1000,
       style,
       ...props
@@ -108,11 +104,11 @@ const ProgressIndicator = React.forwardRef<View, ProgressIndicatorProps>(
     ref
   ) => {
     const theme = useTheme();
+    const primaryColor = theme.colors.primary;
+    const borderColor = theme.colors.border;
+
     const animatedValue = React.useRef(new Animated.Value(0)).current;
     const indeterminateAnim = React.useRef(new Animated.Value(0)).current;
-
-    const progressColor = color || theme.colors.primary;
-    const bgColor = backgroundColor || theme.colors.border;
 
     React.useEffect(() => {
       if (indeterminate) {
@@ -130,7 +126,7 @@ const ProgressIndicator = React.forwardRef<View, ProgressIndicatorProps>(
           useNativeDriver: false,
         }).start();
       }
-    }, [progress, indeterminate, animationDuration]);
+    }, [progress, indeterminate, animationDuration, animatedValue, indeterminateAnim]);
 
     if (variant === 'spinner') {
       return (
@@ -142,7 +138,7 @@ const ProgressIndicator = React.forwardRef<View, ProgressIndicatorProps>(
         >
           <RNActivityIndicator
             size={size === 'sm' ? 'small' : 'large'}
-            color={progressColor}
+            color={primaryColor}
           />
         </View>
       );
@@ -160,14 +156,13 @@ const ProgressIndicator = React.forwardRef<View, ProgressIndicatorProps>(
             <Animated.View
               key={index}
               className={cn(
-                'rounded-full',
+                'rounded-full bg-primary',
                 size === 'sm' && 'w-1.5 h-1.5',
                 size === 'md' && 'w-2 h-2',
                 size === 'lg' && 'w-3 h-3',
                 size === 'xl' && 'w-4 h-4'
               )}
               style={{
-                backgroundColor: progressColor,
                 opacity: indeterminateAnim.interpolate({
                   inputRange: [0, 0.5, 1],
                   outputRange: [0.3, 1, 0.3],
@@ -215,7 +210,7 @@ const ProgressIndicator = React.forwardRef<View, ProgressIndicatorProps>(
               cx={radius + strokeWidth}
               cy={radius + strokeWidth}
               r={radius}
-              stroke={bgColor}
+              stroke={borderColor}
               strokeWidth={strokeWidth}
               fill="none"
             />
@@ -223,7 +218,7 @@ const ProgressIndicator = React.forwardRef<View, ProgressIndicatorProps>(
               cx={radius + strokeWidth}
               cy={radius + strokeWidth}
               r={radius}
-              stroke={progressColor}
+              stroke={primaryColor}
               strokeWidth={strokeWidth}
               fill="none"
               strokeDasharray={circumference}
@@ -237,9 +232,8 @@ const ProgressIndicator = React.forwardRef<View, ProgressIndicatorProps>(
           </Svg>
           {showPercentage && (
             <Text
-              variant="caption2"
+              variant="caption"
               className="absolute"
-              style={{ color: theme.colors.text }}
             >
               {Math.round(progress)}%
             </Text>
@@ -248,19 +242,17 @@ const ProgressIndicator = React.forwardRef<View, ProgressIndicatorProps>(
       );
     }
 
-    // Linear progress (default)
     return (
       <View
         ref={ref}
-        className={cn(progressVariants({ variant, size }), className)}
-        style={[{ backgroundColor: bgColor }, style]}
+        className={cn(progressVariants({ variant, size }), 'bg-border', className)}
+        style={style}
         {...props}
       >
         {indeterminate ? (
           <Animated.View
-            className="h-full rounded-full w-1/3"
+            className="h-full rounded-full w-1/3 bg-primary"
             style={{
-              backgroundColor: progressColor,
               transform: [
                 {
                   translateX: indeterminateAnim.interpolate({
@@ -273,9 +265,8 @@ const ProgressIndicator = React.forwardRef<View, ProgressIndicatorProps>(
           />
         ) : (
           <Animated.View
-            className="h-full rounded-full"
+            className="h-full rounded-full bg-primary"
             style={{
-              backgroundColor: progressColor,
               width: animatedValue.interpolate({
                 inputRange: [0, 1],
                 outputRange: ['0%', '100%'],
