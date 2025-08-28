@@ -5,8 +5,8 @@ import "@/global.css";
 import useDbStore from '@/store/dbStore';
 import useModelStore from '@/store/modelStore';
 import { router, SplashScreen, Stack } from 'expo-router';
-import { Suspense, useEffect, useState } from 'react';
-import { ActivityIndicator, Image, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { Image } from 'react-native';
 import 'react-native-get-random-values';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -55,11 +55,6 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <KeyboardProvider>
         <ThemeProvider value={theme}>
-          <Suspense fallback={
-            <View className="flex-1 justify-center items-center">
-              <ActivityIndicator size="large" />
-            </View>
-          }>
             <Stack>
               <Stack.Screen
                 name="index"
@@ -80,7 +75,6 @@ export default function RootLayout() {
               <Stack.Screen name="models" options={{ title: "Models", presentation: "modal" }} />
               <Stack.Screen name="sessionManager" options={{ title: "Sessions", presentation: "modal" }} />
             </Stack>
-          </Suspense>
         </ThemeProvider>
       </KeyboardProvider>
     </SafeAreaProvider>
