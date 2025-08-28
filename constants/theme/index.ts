@@ -2,7 +2,7 @@ import { DarkTheme, DefaultTheme } from '@react-navigation/native';
 
 import { COLORS } from './colors';
 
-const NAV_THEME = {
+const THEME = {
   light: {
     ...DefaultTheme,
     colors: {
@@ -27,4 +27,4 @@ const NAV_THEME = {
   },
 };
 
-export { NAV_THEME };
+export { THEME };

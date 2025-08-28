@@ -1,6 +1,6 @@
+import LoadingGate from '@/components/LoadingGate';
 import { Button } from '@/components/nativewindui/Button';
 import { Text } from '@/components/nativewindui/Text';
-import LoadingGate from '@/components/LoadingGate';
 import "@/global.css";
 import useDbStore from '@/store/dbStore';
 import useModelStore from '@/store/modelStore';
@@ -11,13 +11,9 @@ import 'react-native-get-random-values';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
-import { NAV_THEME } from '@/constants/theme';
+import { THEME } from '@/constants/theme';
 import { useColorScheme, useInitialAndroidBarSync } from '@/lib/useColorScheme';
-import { ThemeProvider as NavThemeProvider } from '@react-navigation/native';
-
-import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
-
+import { ThemeProvider } from '@react-navigation/native';
 
 export {
   ErrorBoundary
@@ -27,7 +23,6 @@ export default function RootLayout() {
   useInitialAndroidBarSync();
   const [isAppInitialized, setIsAppInitialized] = useState(false);
   const { colorScheme, isDarkColorScheme } = useColorScheme();
-
 
   useEffect(() => {
     const initializeStores = async () => {
@@ -42,38 +37,34 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <KeyboardProvider>
-        <GestureHandlerRootView style={{ flex: 1 }}>
-          <BottomSheetModalProvider>
-            <NavThemeProvider value={NAV_THEME[colorScheme]}>
-              <Suspense fallback={<View className="flex-1 justify-center items-center"><ActivityIndicator size="large" /></View>}>
-                <LoadingGate onInitialized={() => setIsAppInitialized(true)}>
-                  {isAppInitialized && (
-                    <Stack>
-                      <Stack.Screen
-                        name="index"
-                        options={{
-                          title: "Chat",
-                          headerLeft: () => (
-                            <Button variant="ghost" onPress={() => router.push('/sessionManager')}>
-                              <Text>Sessions</Text>
-                            </Button>
-                          ),
-                          headerRight: () => (
-                            <Button variant="ghost" onPress={() => router.push('/models')}>
-                              <Text>Models</Text>
-                            </Button>
-                          ),
-                        }}
-                      />
-                      <Stack.Screen name="models" options={{ title: "Models", presentation: "modal" }} />
-                      <Stack.Screen name="sessionManager" options={{ title: "Sessions", presentation: "modal" }} />
-                    </Stack>
-                  )}
-                </LoadingGate>
-              </Suspense>
-            </NavThemeProvider>
-          </BottomSheetModalProvider>
-        </ GestureHandlerRootView>
+        <ThemeProvider value={THEME[colorScheme]}>
+          <Suspense fallback={<View className="flex-1 justify-center items-center"><ActivityIndicator size="large" /></View>}>
+            <LoadingGate onInitialized={() => setIsAppInitialized(true)}>
+              {isAppInitialized && (
+                <Stack>
+                  <Stack.Screen
+                    name="index"
+                    options={{
+                      title: "Chat",
+                      headerLeft: () => (
+                        <Button variant="ghost" onPress={() => router.push('/sessionManager')}>
+                          <Text>Sessions</Text>
+                        </Button>
+                      ),
+                      headerRight: () => (
+                        <Button variant="ghost" onPress={() => router.push('/models')}>
+                          <Text>Models</Text>
+                        </Button>
+                      ),
+                    }}
+                  />
+                  <Stack.Screen name="models" options={{ title: "Models", presentation: "modal" }} />
+                  <Stack.Screen name="sessionManager" options={{ title: "Sessions", presentation: "modal" }} />
+                </Stack>
+              )}
+            </LoadingGate>
+          </Suspense>
+        </ThemeProvider>
       </KeyboardProvider>
     </SafeAreaProvider>
   );
