@@ -1,10 +1,10 @@
+import { SessionSidebar } from '@/components/SessionSidebar';
 import { AnimatedSplashScreen } from '@/components/AnimatedSplashScreen';
-import { Button } from '@/components/nativewindui/Button';
-import { Text } from '@/components/nativewindui/Text';
 import "@/global.css";
 import useDbStore from '@/store/dbStore';
 import useModelStore from '@/store/modelStore';
-import { router, SplashScreen, Stack } from 'expo-router';
+import { SplashScreen } from 'expo-router';
+import { Drawer } from 'expo-router/drawer';
 import { useEffect, useState } from 'react';
 import { Image } from 'react-native';
 import 'react-native-get-random-values';
@@ -55,26 +55,20 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <KeyboardProvider>
         <ThemeProvider value={theme}>
-            <Stack>
-              <Stack.Screen
+            <Drawer drawerContent={(props) => <SessionSidebar {...props} />}>
+              <Drawer.Screen
                 name="index"
                 options={{
                   title: "Chat",
-                  headerLeft: () => (
-                    <Button variant="ghost" onPress={() => router.push('/sessionManager')}>
-                      <Text>Sessions</Text>
-                    </Button>
-                  ),
-                  headerRight: () => (
-                    <Button variant="ghost" onPress={() => router.push('/models')}>
-                      <Text>Models</Text>
-                    </Button>
-                  ),
                 }}
               />
-              <Stack.Screen name="models" options={{ title: "Models", presentation: "modal" }} />
-              <Stack.Screen name="sessionManager" options={{ title: "Sessions", presentation: "modal" }} />
-            </Stack>
+              <Drawer.Screen
+                name="models"
+                options={{
+                  title: "Models",
+                }}
+              />
+            </Drawer>
         </ThemeProvider>
       </KeyboardProvider>
     </SafeAreaProvider>

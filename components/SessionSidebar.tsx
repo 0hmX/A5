@@ -1,35 +1,34 @@
-
-import { router } from 'expo-router';
-import React from 'react';
-import { FlatList, Pressable, View } from 'react-native';
-
-import { Button } from '@/components/nativewindui/Button';
-import { Text } from '@/components/nativewindui/Text';
 import useSessionStore from '@/store/sessionStore';
+import { DrawerContentComponentProps, DrawerNavigationProp } from '@react-navigation/drawer';
+import { FlatList, Pressable, Text, View } from 'react-native';
+import { Button } from './nativewindui/Button';
 
-export default function SessionManagerScreen() {
+type RootDrawerParamList = {
+  index: undefined;
+};
+
+type SessionSidebarNavigationProp = DrawerNavigationProp<RootDrawerParamList, 'index'>;
+
+export function SessionSidebar(props: DrawerContentComponentProps) {
   const { sessions, activeSessionId, setActiveSession, createNewSession } = useSessionStore();
+  const { navigation } = props;
 
-  const handleSelectSession = (sessionId: string) => {
+  const handleSessionSelect = (sessionId: string) => {
     setActiveSession(sessionId);
-    if (router.canGoBack()) {
-      router.back();
-    }
+    navigation.closeDrawer();
   };
 
-  const handleNewSession = async () => {
+  const handleCreateNewSession = async () => {
     const newSessionId = await createNewSession();
     if (newSessionId) {
       // setActiveSession is already called by createNewSession, so just go back
-      if (router.canGoBack()) {
-        router.back();
-      }
+      navigation.closeDrawer();
     }
   };
 
   return (
-    <View className="flex-1 bg-background p-container">
-      <Button onPress={handleNewSession} variant="primary" className="mb-4">
+    <View style={{ flex: 1, paddingTop: 50 }} className="p-container">
+      <Button onPress={handleCreateNewSession} variant="primary" className="mb-4">
         <Text>New Chat</Text>
       </Button>
       <FlatList
@@ -37,7 +36,7 @@ export default function SessionManagerScreen() {
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <Pressable
-            onPress={() => handleSelectSession(item.id)}
+            onPress={() => handleSessionSelect(item.id)}
             className={`p-4 rounded-lg mb-2 ${
               activeSessionId === item.id ? 'bg-primary' : 'bg-card'
             }`}
@@ -52,7 +51,6 @@ export default function SessionManagerScreen() {
               {item.name}
             </Text>
             <Text
-              variant="caption"
               className={
                 activeSessionId === item.id
                   ? 'text-primary-foreground/70'

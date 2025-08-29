@@ -1,4 +1,8 @@
+import { Feather } from '@expo/vector-icons';
 import * as Clipboard from 'expo-clipboard';
+import { DrawerNavigationProp } from '@react-navigation/drawer';
+import { useNavigation } from 'expo-router';
+import { useLayoutEffect } from 'react';
 
 import { TypingIndicator } from '@/components/TypingIndicator';
 
@@ -16,6 +20,14 @@ import { ActivityIndicator, FlatList, KeyboardAvoidingView, Platform, Pressable,
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { v4 as uuidv4 } from 'uuid';
 
+type RootDrawerParamList = {
+  index: undefined;
+  sessionManager: undefined;
+  models: undefined;
+};
+
+type ChatScreenNavigationProp = DrawerNavigationProp<RootDrawerParamList, 'index'>;
+
 export default function ChatScreen() {
   const { activeModel, setActiveModel } = useChatStore();
   const { models, isInitialized, loadedModelName, loadModel, generate } = useModelStore();
@@ -31,6 +43,19 @@ export default function ChatScreen() {
   const [isModelLoaded, setIsModelLoaded] = useState(false);
   const modelState = activeModel ? models[activeModel] : null;
   const flatListRef = useRef<FlatList>(null);
+
+  const navigation = useNavigation<ChatScreenNavigationProp>();
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerLeft: () => (
+        <Button variant="ghost" onPress={() => {
+          navigation.openDrawer()}}>
+          <Feather name="menu" size={24} color={theme.colors.text} />
+        </Button>
+      ),
+    });
+  }, [navigation, theme]);
 
   useEffect(() => {
     console.log('ChatScreen: Initializing sessions');
