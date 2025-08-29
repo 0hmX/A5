@@ -40,8 +40,6 @@ export default function ChatScreen() {
   const { appStatus, setAppStatus, errorMessage, setError, clearError } = useAppStatusStore();
   const { drawerProgress } = useAnimation();
 
-  console.log('ChatScreen: Rendering with activeSessionId:', activeSessionId);
-
   const theme = useTheme();
   const insets = useSafeAreaInsets();
 
@@ -62,36 +60,22 @@ export default function ChatScreen() {
   });
 
   const handlePresentModalPress = useCallback(() => {
-    console.log('handlePresentModalPress: Attempting to present bottom sheet');
-    if (bottomSheetRef.current) {
-      console.log('handlePresentModalPress: Ref exists, calling present()');
-      bottomSheetRef.current.present();
-    } else {
-      console.log('handlePresentModalPress: Ref does not exist');
-    }
+    bottomSheetRef.current?.present();
   }, []);
 
   useEffect(() => {
-    console.log('ChatScreen: Initializing sessions');
     initializeSessions();
   }, [initializeSessions]);
 
   useEffect(() => {
-    console.log('ChatScreen: activeSessionId changed to', activeSessionId);
-  }, [activeSessionId, sessions]);
-
-  useEffect(() => {
     const loadModelAsync = async () => {
       if (activeModel === loadedModelName) {
-        console.log('ChatScreen: loadModel - Model already loaded.');
         setIsModelLoaded(true);
         return;
       }
 
-      console.log('ChatScreen: loadModel useEffect triggered');
       setIsModelLoaded(false);
       if (!activeModel || !modelState || modelState.status !== 'downloaded') {
-        console.log('ChatScreen: loadModel - Pre-conditions not met');
         return;
       }
 
@@ -99,12 +83,10 @@ export default function ChatScreen() {
       const [success, error] = await loadModel(activeModel);
 
       if (error) {
-        console.error('ChatScreen: loadModel - Load error:', error.message);
         setError(error.message);
         setAppStatus('ERROR');
         return;
       }
-      console.log('ChatScreen: Model loaded successfully');
       setAppStatus('IDLE');
       setIsModelLoaded(true);
     };
@@ -131,12 +113,10 @@ export default function ChatScreen() {
       const lastUsedModel = lastUsedModelName ? downloadedModels.find(m => m.model.name === lastUsedModelName) : undefined;
 
       if (lastUsedModel) {
-        console.log('Auto-loading last used model:', lastUsedModel.model.name);
         setActiveModel(lastUsedModel.model.name);
       } else {
         const randomIndex = Math.floor(Math.random() * downloadedModels.length);
         const randomModel = downloadedModels[randomIndex];
-        console.log('Auto-loading random model:', randomModel.model.name);
         setActiveModel(randomModel.model.name);
       }
     };
@@ -148,7 +128,6 @@ export default function ChatScreen() {
   const messages = activeSession ? activeSession.history : [];
 
   const handleSend = async () => {
-    console.log('ChatScreen: handleSend started');
     if (inputText.trim().length === 0 || !activeModel || !activeSessionId || !isModelLoaded || appStatus === 'LOADING_MODEL') {
       return;
     }
@@ -169,7 +148,6 @@ export default function ChatScreen() {
     const [response, responseError] = await generate(userMessage.content);
 
     if (responseError) {
-      console.error('ChatScreen: Generate error:', responseError.message);
       setError(responseError.message);
       setAppStatus('ERROR');
       return;
@@ -190,41 +168,26 @@ export default function ChatScreen() {
     setAppStatus('IDLE');
   };
 
-
-
-
-  if (!modelState || modelState.status === 'not_downloaded') {
-    return (
-      <View className="flex-1 justify-center items-center" style={{ backgroundColor: theme.colors.background }}>
-        <Text style={{ color: theme.colors.text }}>Model not downloaded.</Text>
-      </View>
-    );
-  }
-
-  if (!activeSession) {
-    return (
-      <View className="flex-1 justify-center items-center" style={{ backgroundColor: theme.colors.background }}>
-        <Text style={{ color: theme.colors.text }}>Please select a session to start chatting.</Text>
-      </View>
-    );
-  }
-
-  return (
-    <KeyboardAvoidingView
-      style={{ flex: 1 }}
-      behavior={Platform.OS === "ios" ? "padding" : "padding"}
-      keyboardVerticalOffset={40}
-    >
-      <Animated.View style={[{ flex: 1, overflow: 'hidden', backgroundColor: theme.colors.background }, animatedStyle]}>
-        <View style={{ paddingTop: insets.top, paddingHorizontal: 16, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Button variant="ghost" onPress={() => navigation.openDrawer()}>
-            <Feather name="menu" size={24} color={theme.colors.text} />
-          </Button>
-          <Text variant="heading">Chat</Text>
-          <Button variant="ghost" onPress={handlePresentModalPress}>
-            <Feather name="box" size={24} color={theme.colors.text} />
-          </Button>
+  const renderContent = () => {
+    console.log('renderContent: modelState', modelState);
+    if (!modelState || modelState.status === 'not_downloaded') {
+      return (
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <Text className='text-white'>Model not downloaded.</Text>
         </View>
+      );
+    }
+
+    if (!activeSession) {
+      return (
+        <View className="flex-1 justify-center items-center">
+          <Text>Please select a session to start chatting.</Text>
+        </View>
+      );
+    }
+
+    return (
+      <>
         <FlatList
           ref={flatListRef}
           data={messages}
@@ -308,6 +271,29 @@ export default function ChatScreen() {
               <Text>Send</Text>
             </Button>
           </View>
+        </View>
+      </>
+    );
+  };
+
+  return (
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === "ios" ? "padding" : "padding"}
+      keyboardVerticalOffset={40}
+    >
+      <Animated.View style={[{ flex: 1, overflow: 'hidden', backgroundColor: theme.colors.background }, animatedStyle]}>
+        <View style={{ paddingTop: insets.top, paddingHorizontal: 16, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Button variant="ghost" onPress={() => navigation.openDrawer()}>
+            <Feather name="menu" size={24} color={theme.colors.text} />
+          </Button>
+          <Text variant="heading">Chat</Text>
+          <Button variant="ghost" onPress={handlePresentModalPress}>
+            <Feather name="box" size={24} color={theme.colors.text} />
+          </Button>
+        </View>
+        <View style={{ flex: 1 }}>
+          {renderContent()}
         </View>
       </Animated.View>
       <CustomBottomSheet ref={bottomSheetRef}>
