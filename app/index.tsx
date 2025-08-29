@@ -1,11 +1,12 @@
 import { CustomBottomSheet } from '@/components/BottomSheet';
 import ModelManagement from '@/components/ModelManagement';
+import { useAnimation } from '@/context/AnimationContext';
 import { Feather } from '@expo/vector-icons';
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
 import { DrawerNavigationProp } from '@react-navigation/drawer';
 import * as Clipboard from 'expo-clipboard';
 import { useNavigation } from 'expo-router';
-import { useCallback, useLayoutEffect } from 'react';
+import { useCallback } from 'react';
 
 import { TypingIndicator } from '@/components/TypingIndicator';
 
@@ -20,6 +21,7 @@ import useModelStore from '@/store/modelStore';
 import useSessionStore from '@/store/sessionStore';
 import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, FlatList, KeyboardAvoidingView, Platform, Pressable, View } from 'react-native';
+import Animated, { useAnimatedStyle } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -36,6 +38,7 @@ export default function ChatScreen() {
   const { models, isInitialized, loadedModelName, loadModel, generate } = useModelStore();
   const { sessions, activeSessionId, addMessageToSession, initializeSessions } = useSessionStore();
   const { appStatus, setAppStatus, errorMessage, setError, clearError } = useAppStatusStore();
+  const { drawerProgress } = useAnimation();
 
   console.log('ChatScreen: Rendering with activeSessionId:', activeSessionId);
 
@@ -51,25 +54,22 @@ export default function ChatScreen() {
 
   const bottomSheetRef = useRef<BottomSheetModal>(null);
 
-  const handlePresentModalPress = useCallback(() => {
-    bottomSheetRef.current?.present();
-  }, []);
+  const animatedStyle = useAnimatedStyle(() => {
+    const translateX = drawerProgress.value * 250;
+    return {
+      transform: [{ translateX }],
+    };
+  });
 
-  useLayoutEffect(() => {
-    navigation.setOptions({
-      headerLeft: () => (
-        <Button variant="ghost" onPress={() => {
-          navigation.openDrawer()}}>
-          <Feather name="menu" size={24} color={theme.colors.text} />
-        </Button>
-      ),
-      headerRight: () => (
-        <Button variant="ghost" onPress={handlePresentModalPress}>
-          <Feather name="box" size={24} color={theme.colors.text} />
-        </Button>
-      ),
-    });
-  }, [navigation, theme, handlePresentModalPress]);
+  const handlePresentModalPress = useCallback(() => {
+    console.log('handlePresentModalPress: Attempting to present bottom sheet');
+    if (bottomSheetRef.current) {
+      console.log('handlePresentModalPress: Ref exists, calling present()');
+      bottomSheetRef.current.present();
+    } else {
+      console.log('handlePresentModalPress: Ref does not exist');
+    }
+  }, []);
 
   useEffect(() => {
     console.log('ChatScreen: Initializing sessions');
@@ -215,7 +215,16 @@ export default function ChatScreen() {
       behavior={Platform.OS === "ios" ? "padding" : "padding"}
       keyboardVerticalOffset={40}
     >
-      <View className="flex-1" style={{ backgroundColor: theme.colors.background }}>
+      <Animated.View style={[{ flex: 1, overflow: 'hidden', backgroundColor: theme.colors.background }, animatedStyle]}>
+        <View style={{ paddingTop: insets.top, paddingHorizontal: 16, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Button variant="ghost" onPress={() => navigation.openDrawer()}>
+            <Feather name="menu" size={24} color={theme.colors.text} />
+          </Button>
+          <Text variant="heading">Chat</Text>
+          <Button variant="ghost" onPress={handlePresentModalPress}>
+            <Feather name="box" size={24} color={theme.colors.text} />
+          </Button>
+        </View>
         <FlatList
           ref={flatListRef}
           data={messages}
@@ -300,7 +309,7 @@ export default function ChatScreen() {
             </Button>
           </View>
         </View>
-      </View>
+      </Animated.View>
       <CustomBottomSheet ref={bottomSheetRef}>
         <ModelManagement />
       </CustomBottomSheet>
