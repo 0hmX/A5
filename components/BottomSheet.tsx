@@ -1,3 +1,4 @@
+import { useTheme } from '@/hooks/useTheme';
 import { BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
 import React, { forwardRef, useMemo } from 'react';
 
@@ -7,21 +8,19 @@ interface CustomBottomSheetProps {
 }
 
 export const CustomBottomSheet = forwardRef<BottomSheetModal, CustomBottomSheetProps>(({ children, snapPoints = ['50%', '90%'] }, ref) => {
-  console.log('CustomBottomSheet: Rendering');
-  const memoizedSnapPoints = useMemo(() => {
-    console.log('CustomBottomSheet: Recalculating snap points', snapPoints);
-    return snapPoints;
-  }, [snapPoints]);
+  const theme = useTheme();
+  const memoizedSnapPoints = useMemo(() => snapPoints, [snapPoints]);
 
   return (
     <BottomSheetModal
       ref={ref}
       index={0}
       snapPoints={memoizedSnapPoints}
-      handleIndicatorStyle={{ backgroundColor: '#ccc' }}
+      handleIndicatorStyle={{ backgroundColor: theme.colors.border }}
+      backgroundStyle={{ backgroundColor: theme.colors.card }}
       onChange={(index) => console.log('CustomBottomSheet: onChange', index)}
     >
-      <BottomSheetView style={{ flex: 1 }}>
+      <BottomSheetView style={{ flex: 1, height: '100%' }}>
         {children}
       </BottomSheetView>
     </BottomSheetModal>
