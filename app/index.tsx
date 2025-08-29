@@ -8,20 +8,18 @@ import { BottomSheetModal } from '@gorhom/bottom-sheet';
 import { DrawerNavigationProp } from '@react-navigation/drawer';
 import * as Clipboard from 'expo-clipboard';
 import { useNavigation } from 'expo-router';
-import { useCallback } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { TypingIndicator } from '@/components/TypingIndicator';
 
 import { Button } from '@/components/nativewindui/Button';
 import { Text } from '@/components/nativewindui/Text';
 import { TextInput } from '@/components/TextInput';
-import { useTheme } from '@/hooks/useTheme';
 import useAppStatusStore from '@/store/appStatusStore';
 import useChatStore from '@/store/chatStore';
 import useDbStore from '@/store/dbStore';
 import useModelStore from '@/store/modelStore';
 import useSessionStore from '@/store/sessionStore';
-import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, FlatList, KeyboardAvoidingView, Platform, Pressable, View } from 'react-native';
 import Animated, { useAnimatedStyle } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -42,7 +40,6 @@ export default function ChatScreen() {
   const { appStatus, setAppStatus, errorMessage, setError, clearError } = useAppStatusStore();
   const { drawerProgress } = useAnimation();
 
-  const theme = useTheme();
   const insets = useSafeAreaInsets();
 
   const [inputText, setInputText] = useState('');
@@ -182,7 +179,7 @@ export default function ChatScreen() {
     if (!activeSession) {
       return (
         <View className="flex-1 justify-center items-center">
-          <Text>Please select a session to start chatting.</Text>
+          <Text className="text-foreground">Please select a session to start chatting.</Text>
         </View>
       );
     }
@@ -210,12 +207,12 @@ export default function ChatScreen() {
               {item.role === 'model' && (
                 <View className="mt-2">
                   {item.modelName && (
-                    <Text variant="caption" className="text-muted-foreground">
+                    <Text className="text-caption text-muted-foreground">
                       Model: {item.modelName}
                     </Text>
                   )}
                   {item.generationTimeMs && (
-                    <Text variant="caption" className="text-muted-foreground">
+                    <Text className="text-caption text-muted-foreground">
                       Generated in {(item.generationTimeMs / 1000).toFixed(2)}s
                     </Text>
                   )}
@@ -228,7 +225,7 @@ export default function ChatScreen() {
           ListFooterComponent={appStatus === 'GENERATING' ? <TypingIndicator /> : null}
         />
         {appStatus === 'LOADING_MODEL' && (
-          <ActivityIndicator size="large" color={theme.colors.primary} className="my-2.5" />
+          <ActivityIndicator size="large" className="my-2.5 text-primary" />
         )}
         {appStatus === 'ERROR' && (
           <View className="p-2.5 rounded-md m-2.5 items-center bg-destructive">
@@ -263,9 +260,9 @@ export default function ChatScreen() {
               onPress={handleSend}
               disabled={appStatus !== 'IDLE' || !isModelLoaded || !inputText.trim()}
               size="icon"
-              className="bg-background"
+              className="bg-background text-foreground"
             >
-              <MaterialIcons name="send" size={24} color={theme.colors.text} />
+              <MaterialIcons name="send" size={24} />
             </Button>
           </View>
         </View>
@@ -288,12 +285,12 @@ export default function ChatScreen() {
           style={{ paddingTop: insets.top }}
         >
           <Button className="gap-2" variant="ghost" onPress={() => navigation.openDrawer()}>
-            <Feather name="menu" size={24} color={theme.colors.text} />
-            <Text variant={'display'}>A5</Text>
+            <Feather name="menu" size={24} />
+            <Text className="text-display text-foreground">A5</Text>
           </Button>
-          <Text variant="heading">Chat</Text>
+          <Text className="text-heading text-foreground">Chat</Text>
           <Button variant="ghost" onPress={handlePresentModalPress}>
-            <FontAwesome5 name="brain" size={24} color={theme.colors.text} />
+            <FontAwesome5 name="brain" size={24} />
           </Button>
         </View>
         <View className="flex-1">{renderContent()}</View>

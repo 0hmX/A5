@@ -15,8 +15,8 @@ import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { useAnimatedReaction, useSharedValue } from 'react-native-reanimated';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
-import { useTheme } from '@/hooks/useTheme';
-import { useInitialAndroidBarSync } from '@/lib/useColorScheme';
+import { AppDarkTheme, AppLightTheme } from '@/constants/NavigationTheme';
+import { useColorScheme, useInitialAndroidBarSync } from '@/lib/useColorScheme';
 import { ThemeProvider } from '@react-navigation/native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
@@ -41,7 +41,7 @@ function CustomDrawerContent(props: any) {
 export default function RootLayout() {
   useInitialAndroidBarSync();
   const [isAppInitialized, setIsAppInitialized] = useState(false);
-  const theme = useTheme();
+  const { colorScheme } = useColorScheme();
   const drawerProgress = useSharedValue(0);
 
   useEffect(() => {
@@ -76,7 +76,7 @@ export default function RootLayout() {
       <GestureHandlerRootView style={{ flex: 1 }}>
         <SafeAreaProvider>
           <KeyboardProvider>
-            <ThemeProvider value={theme}>
+            <ThemeProvider value={colorScheme === 'dark' ? AppDarkTheme : AppLightTheme}>
               <BottomSheetModalProvider>
                 <Drawer drawerContent={(props) => <CustomDrawerContent {...props} />}>
                   <Drawer.Screen

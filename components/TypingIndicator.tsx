@@ -1,10 +1,7 @@
-
-import { useTheme } from '@/hooks/useTheme';
 import React, { useEffect, useRef } from 'react';
 import { Animated, View } from 'react-native';
 
 const Dot = ({ delay }: { delay: number }) => {
-  const { colors } = useTheme();
   const animation = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {

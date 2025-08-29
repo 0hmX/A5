@@ -1,4 +1,3 @@
-import { useTheme } from '@/hooks/useTheme';
 import { cn } from '@/lib/cn';
 import { VariantProps, cva } from 'class-variance-authority';
 import { cssInterop } from 'nativewind';
@@ -103,10 +102,6 @@ const ProgressIndicator = React.forwardRef<View, ProgressIndicatorProps>(
     },
     ref
   ) => {
-    const theme = useTheme();
-    const primaryColor = theme.colors.primary;
-    const borderColor = theme.colors.border;
-
     const animatedValue = React.useRef(new Animated.Value(0)).current;
     const indeterminateAnim = React.useRef(new Animated.Value(0)).current;
 
@@ -138,7 +133,7 @@ const ProgressIndicator = React.forwardRef<View, ProgressIndicatorProps>(
         >
           <RNActivityIndicator
             size={size === 'sm' ? 'small' : 'large'}
-            color={primaryColor}
+            className="text-primary"
           />
         </View>
       );
@@ -204,21 +199,27 @@ const ProgressIndicator = React.forwardRef<View, ProgressIndicatorProps>(
           <Svg
             width={radius * 2 + strokeWidth * 2}
             height={radius * 2 + strokeWidth * 2}
-            className="absolute"
+            className="absolute text-border"
           >
             <Circle
               cx={radius + strokeWidth}
               cy={radius + strokeWidth}
               r={radius}
-              stroke={borderColor}
+              stroke="currentColor"
               strokeWidth={strokeWidth}
               fill="none"
             />
+          </Svg>
+          <Svg
+            width={radius * 2 + strokeWidth * 2}
+            height={radius * 2 + strokeWidth * 2}
+            className="absolute text-primary"
+          >
             <AnimatedCircle
               cx={radius + strokeWidth}
               cy={radius + strokeWidth}
               r={radius}
-              stroke={primaryColor}
+              stroke="currentColor"
               strokeWidth={strokeWidth}
               fill="none"
               strokeDasharray={circumference}
@@ -232,8 +233,7 @@ const ProgressIndicator = React.forwardRef<View, ProgressIndicatorProps>(
           </Svg>
           {showPercentage && (
             <Text
-              variant="caption"
-              className="absolute"
+              className="absolute text-caption text-foreground"
             >
               {Math.round(progress)}%
             </Text>

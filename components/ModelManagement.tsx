@@ -6,7 +6,6 @@ import { InfiniteProgressBar } from '@/components/InfiniteProgressBar';
 import { Button } from '@/components/nativewindui/Button';
 import { Text } from '@/components/nativewindui/Text';
 import { useModelManager } from '@/hooks/useModelManager';
-import { useTheme } from '@/hooks/useTheme';
 import useChatStore from '@/store/chatStore';
 import useModelStore from '@/store/modelStore';
 import useSessionStore from '@/store/sessionStore';
@@ -20,24 +19,23 @@ interface ModelItemProps {
 
 const ModelItem = React.memo<ModelItemProps>(({ item, isActive, onSetActive }) => {
   const { status, progress, speedMbps, downloadModel, deleteModel } = useModelManager(item.model.name);
-  const { colors } = useTheme();
 
   const formattedSize = item.model.size < 1024 ? `${item.model.size} MB` : `${(item.model.size / 1024).toFixed(2)} GB`;
 
   return (
     <View className="bg-card flex-row justify-between items-center p-4 rounded-lg mb-3">
       <View className="flex-1">
-        <Text variant="body" className="font-bold text-foreground">{item.model.name}</Text>
+        <Text className="text-body font-bold text-foreground">{item.model.name}</Text>
         <View className="flex-row flex-wrap gap-x-2 mt-1">
           {item.model.tags.map((tag) => (
-            <Text key={tag} variant="caption" className="text-muted-foreground text-xs">
+            <Text key={tag} className="text-caption text-muted-foreground">
               #{tag}
             </Text>
           ))}
-          <Text variant="caption" className="text-muted-foreground text-xs">
+          <Text className="text-caption text-muted-foreground">
             Backend: {item.model.backend}
           </Text>
-          <Text variant="caption" className="text-muted-foreground text-xs">
+          <Text className="text-caption text-muted-foreground">
             Size: {formattedSize}
           </Text>
         </View>
@@ -46,19 +44,19 @@ const ModelItem = React.memo<ModelItemProps>(({ item, isActive, onSetActive }) =
       <View className="ml-4 flex-row items-center gap-2">
         {status === 'downloaded' && !isActive && (
           <>
-            <Pressable onPress={() => deleteModel()} className="p-2 rounded-full bg-destructive/10">
-              <Ionicons name="trash" size={18} color={colors.background} />
+            <Pressable onPress={() => deleteModel()} className="p-2 rounded-full bg-destructive/10 text-destructive">
+              <Ionicons name="trash" size={18} />
             </Pressable>
-            <Pressable onPress={() => onSetActive(item.model.name)} className="p-2 rounded-full bg-primary/10">
-              <Ionicons name="checkmark" size={18} color={colors.primary} />
+            <Pressable onPress={() => onSetActive(item.model.name)} className="p-2 rounded-full bg-primary/10 text-primary">
+              <Ionicons name="checkmark" size={18} />
             </Pressable>
           </>
         )}
         {status === 'downloaded' && isActive && (
           <>
-            <Text variant="body" className="font-bold text-primary">Active</Text>
-            <Pressable onPress={() => deleteModel()} className="p-2 rounded-full bg-destructive/10 ml-2">
-              <Ionicons name="trash" size={18} color={colors.background} />
+            <Text className="text-body font-bold text-primary">Active</Text>
+            <Pressable onPress={() => deleteModel()} className="p-2 rounded-full bg-destructive/10 ml-2 text-destructive">
+              <Ionicons name="trash" size={18} />
             </Pressable>
           </>
         )}
@@ -84,18 +82,18 @@ const ModelItem = React.memo<ModelItemProps>(({ item, isActive, onSetActive }) =
             {progress < 0.01 ? (
               <InfiniteProgressBar />
             ) : (
-              <View className="w-full h-2 bg-muted rounded-full overflow-hidden">
+              <View className="w-full h-2 bg-border rounded-full overflow-hidden">
                 <View
                   className="h-full bg-primary rounded-full"
                   style={{ width: `${progress * 100}%` }}
                 />
               </View>
             )}
-            <Text variant="caption" className="text-muted-foreground text-xs">
+            <Text className="text-caption text-muted-foreground">
               {(progress * 100).toFixed(0)}%
             </Text>
             {speedMbps !== null && (
-              <Text variant="caption" className="text-muted-foreground text-xs">
+              <Text className="text-caption text-muted-foreground">
                 {speedMbps.toFixed(1)} Mbps
               </Text>
             )}
@@ -138,7 +136,7 @@ export default function ModelManagement() {
   ];
 
   return (
-    <View className="flex-1 bg-background p-container">
+    <View className="flex-1 bg-background p-4">
       <SectionList
         sections={sections}
         keyExtractor={(item) => item.model.name}
@@ -153,7 +151,7 @@ export default function ModelManagement() {
           if (data.length === 0) {
             return null;
           }
-          return <Text variant="subheading" className="mt-4 mb-2">{title}</Text>;
+          return <Text className="text-subheading mt-4 mb-2 text-foreground">{title}</Text>;
         }}
         contentContainerStyle={{ paddingBottom: 16 }}
       />

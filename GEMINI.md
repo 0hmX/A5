@@ -46,9 +46,9 @@ These classes are defined in `tailwind.config.js` and are the single source of t
 -   **Typography**: Always use the predefined text size classes: `text-display`, `text-heading`, `text-subheading`, `text-body-lg`, `text-body`, `text-caption`, `text-label`.
 -   **Spacing**: Always use the predefined spacing scale for `margin`, `padding`, and `gap`: `p-1`, `m-4`, `gap-2`, etc.
 
-### Secondary Method: The `useTheme` Hook
+### Use ':dark'
 
-The `useTheme` hook (imported from `@/hooks/useTheme`) is an **exception**, not the rule. It should only be used when a component's props do not accept a `className` for styling.
+use this taillwidcss feature to handel darkmode
 
 **When to use it:**
 

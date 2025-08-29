@@ -1,10 +1,7 @@
-
-import { useTheme } from '@/hooks/useTheme';
 import React, { useEffect, useRef } from 'react';
 import { Animated, Easing, View } from 'react-native';
 
 export function InfiniteProgressBar() {
-  const { colors } = useTheme();
   const animation = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -20,11 +17,11 @@ export function InfiniteProgressBar() {
 
   const translateX = animation.interpolate({
     inputRange: [0, 1],
-    outputRange: [-100, 100], // Adjust these values based on the bar's width
+    outputRange: ['-100%', '300%'],
   });
 
   return (
-    <View className="w-full h-2 bg-muted rounded-full overflow-hidden">
+    <View className="w-full h-2 bg-border rounded-full overflow-hidden">
       <Animated.View
         className="h-full w-1/3 bg-primary rounded-full"
         style={{
