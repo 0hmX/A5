@@ -1,6 +1,5 @@
-import React, { useMemo, forwardRef } from 'react';
-import { View } from 'react-native';
-import { BottomSheetModal, BottomSheetModalProvider } from '@gorhom/bottom-sheet';
+import { BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
+import React, { forwardRef, useMemo } from 'react';
 
 interface CustomBottomSheetProps {
   children: React.ReactNode;
@@ -8,20 +7,23 @@ interface CustomBottomSheetProps {
 }
 
 export const CustomBottomSheet = forwardRef<BottomSheetModal, CustomBottomSheetProps>(({ children, snapPoints = ['50%', '90%'] }, ref) => {
-  const memoizedSnapPoints = useMemo(() => snapPoints, [snapPoints]);
+  console.log('CustomBottomSheet: Rendering');
+  const memoizedSnapPoints = useMemo(() => {
+    console.log('CustomBottomSheet: Recalculating snap points', snapPoints);
+    return snapPoints;
+  }, [snapPoints]);
 
   return (
-    <BottomSheetModalProvider>
-      <BottomSheetModal
-        ref={ref}
-        index={0}
-        snapPoints={memoizedSnapPoints}
-        handleIndicatorStyle={{ backgroundColor: '#ccc' }}
-      >
-        <View style={{ flex: 1 }}>
-          {children}
-        </View>
-      </BottomSheetModal>
-    </BottomSheetModalProvider>
+    <BottomSheetModal
+      ref={ref}
+      index={0}
+      snapPoints={memoizedSnapPoints}
+      handleIndicatorStyle={{ backgroundColor: '#ccc' }}
+      onChange={(index) => console.log('CustomBottomSheet: onChange', index)}
+    >
+      <BottomSheetView style={{ flex: 1 }}>
+        {children}
+      </BottomSheetView>
+    </BottomSheetModal>
   );
 });

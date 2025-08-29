@@ -1,9 +1,9 @@
-import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { AnimatedSplashScreen } from '@/components/AnimatedSplashScreen';
 import { SessionSidebar } from '@/components/SessionSidebar';
 import "@/global.css";
 import useDbStore from '@/store/dbStore';
 import useModelStore from '@/store/modelStore';
+import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { SplashScreen } from 'expo-router';
 import { Drawer } from 'expo-router/drawer';
 import { useEffect, useState } from 'react';
@@ -15,6 +15,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useTheme } from '@/hooks/useTheme';
 import { useInitialAndroidBarSync } from '@/lib/useColorScheme';
 import { ThemeProvider } from '@react-navigation/native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 export {
   ErrorBoundary
@@ -56,6 +57,7 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <KeyboardProvider>
         <ThemeProvider value={theme}>
+          <GestureHandlerRootView>
           <BottomSheetModalProvider>
             <Drawer drawerContent={(props) => <SessionSidebar {...props} />}>
               <Drawer.Screen
@@ -66,6 +68,7 @@ export default function RootLayout() {
               />
             </Drawer>
           </BottomSheetModalProvider>
+          </GestureHandlerRootView>
         </ThemeProvider>
       </KeyboardProvider>
     </SafeAreaProvider>
