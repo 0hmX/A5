@@ -1,17 +1,16 @@
-import { router } from 'expo-router';
-import React, { useCallback, useEffect } from 'react';
-import { SectionList, View, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import React, { useCallback, useEffect } from 'react';
+import { Pressable, SectionList, View } from 'react-native';
 
+import { InfiniteProgressBar } from '@/components/InfiniteProgressBar';
 import { Button } from '@/components/nativewindui/Button';
 import { Text } from '@/components/nativewindui/Text';
 import { useModelManager } from '@/hooks/useModelManager';
+import { useTheme } from '@/hooks/useTheme';
 import useChatStore from '@/store/chatStore';
 import useModelStore from '@/store/modelStore';
 import useSessionStore from '@/store/sessionStore';
 import { ModelState } from '@/store/types';
-import { useTheme } from '@/hooks/useTheme';
-import { InfiniteProgressBar } from '@/components/InfiniteProgressBar';
 
 interface ModelItemProps {
   item: ModelState;
@@ -48,7 +47,7 @@ const ModelItem = React.memo<ModelItemProps>(({ item, isActive, onSetActive }) =
         {status === 'downloaded' && !isActive && (
           <>
             <Pressable onPress={() => deleteModel()} className="p-2 rounded-full bg-destructive/10">
-              <Ionicons name="trash" size={18} color={colors.destructive} />
+              <Ionicons name="trash" size={18} color={colors.background} />
             </Pressable>
             <Pressable onPress={() => onSetActive(item.model.name)} className="p-2 rounded-full bg-primary/10">
               <Ionicons name="checkmark" size={18} color={colors.primary} />
@@ -59,7 +58,7 @@ const ModelItem = React.memo<ModelItemProps>(({ item, isActive, onSetActive }) =
           <>
             <Text variant="body" className="font-bold text-primary">Active</Text>
             <Pressable onPress={() => deleteModel()} className="p-2 rounded-full bg-destructive/10 ml-2">
-              <Ionicons name="trash" size={18} color={colors.destructive} />
+              <Ionicons name="trash" size={18} color={colors.background} />
             </Pressable>
           </>
         )}
@@ -107,7 +106,7 @@ const ModelItem = React.memo<ModelItemProps>(({ item, isActive, onSetActive }) =
   );
 });
 
-export default function ModelManagementScreen() {
+export default function ModelManagement() {
   const { activeModel, setActiveModel } = useChatStore();
   const { models, initializeModels } = useModelStore();
   const { activeSessionId, createNewSession } = useSessionStore();
@@ -121,7 +120,6 @@ export default function ModelManagementScreen() {
     if (!activeSessionId) {
       await createNewSession();
     }
-    router.back();
   }, [activeSessionId, createNewSession, setActiveModel]);
 
   const sections = [

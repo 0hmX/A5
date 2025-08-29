@@ -1,8 +1,11 @@
+import { CustomBottomSheet } from '@/components/BottomSheet';
+import ModelManagement from '@/components/ModelManagement';
 import { Feather } from '@expo/vector-icons';
-import * as Clipboard from 'expo-clipboard';
+import { BottomSheetModal } from '@gorhom/bottom-sheet';
 import { DrawerNavigationProp } from '@react-navigation/drawer';
+import * as Clipboard from 'expo-clipboard';
 import { useNavigation } from 'expo-router';
-import { useLayoutEffect } from 'react';
+import { useCallback, useLayoutEffect } from 'react';
 
 import { TypingIndicator } from '@/components/TypingIndicator';
 
@@ -46,6 +49,12 @@ export default function ChatScreen() {
 
   const navigation = useNavigation<ChatScreenNavigationProp>();
 
+  const bottomSheetRef = useRef<BottomSheetModal>(null);
+
+  const handlePresentModalPress = useCallback(() => {
+    bottomSheetRef.current?.present();
+  }, []);
+
   useLayoutEffect(() => {
     navigation.setOptions({
       headerLeft: () => (
@@ -54,8 +63,13 @@ export default function ChatScreen() {
           <Feather name="menu" size={24} color={theme.colors.text} />
         </Button>
       ),
+      headerRight: () => (
+        <Button variant="ghost" onPress={handlePresentModalPress}>
+          <Feather name="box" size={24} color={theme.colors.text} />
+        </Button>
+      ),
     });
-  }, [navigation, theme]);
+  }, [navigation, theme, handlePresentModalPress]);
 
   useEffect(() => {
     console.log('ChatScreen: Initializing sessions');
@@ -287,6 +301,9 @@ export default function ChatScreen() {
           </View>
         </View>
       </View>
+      <CustomBottomSheet ref={bottomSheetRef}>
+        <ModelManagement />
+      </CustomBottomSheet>
     </KeyboardAvoidingView>
   );
 }

@@ -1,5 +1,6 @@
-import { SessionSidebar } from '@/components/SessionSidebar';
+import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { AnimatedSplashScreen } from '@/components/AnimatedSplashScreen';
+import { SessionSidebar } from '@/components/SessionSidebar';
 import "@/global.css";
 import useDbStore from '@/store/dbStore';
 import useModelStore from '@/store/modelStore';
@@ -55,6 +56,7 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <KeyboardProvider>
         <ThemeProvider value={theme}>
+          <BottomSheetModalProvider>
             <Drawer drawerContent={(props) => <SessionSidebar {...props} />}>
               <Drawer.Screen
                 name="index"
@@ -62,13 +64,8 @@ export default function RootLayout() {
                   title: "Chat",
                 }}
               />
-              <Drawer.Screen
-                name="models"
-                options={{
-                  title: "Models",
-                }}
-              />
             </Drawer>
+          </BottomSheetModalProvider>
         </ThemeProvider>
       </KeyboardProvider>
     </SafeAreaProvider>
