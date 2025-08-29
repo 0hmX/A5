@@ -1,5 +1,3 @@
-// components/TextInput.tsx
-import { useTheme } from '@/hooks/useTheme';
 import { cn } from '@/lib/cn';
 import { VariantProps, cva } from 'class-variance-authority';
 import { cssInterop } from 'nativewind';
@@ -31,7 +29,7 @@ const textInputVariants = cva(
         xl: 'h-14 text-xl px-4 py-3',
       },
       state: {
-        default: '',
+        default: 'border-border',
         focused: 'border-primary',
         error: 'border-destructive',
         disabled: 'opacity-50',
@@ -80,7 +78,6 @@ const TextInput = React.forwardRef<RNTextInput, TextInputProps>(
     },
     ref
   ) => {
-    const theme = useTheme();
     const textInputClassName = React.useContext(TextInputClassContext);
     const [isFocused, setIsFocused] = React.useState(false);
 
@@ -120,13 +117,6 @@ const TextInput = React.forwardRef<RNTextInput, TextInputProps>(
             isFocused && variant === 'default' && 'border-primary',
             error && 'border-destructive'
           )}
-          style={{
-            borderColor: state === 'error' 
-              ? theme.colors.notification 
-              : state === 'focused' 
-                ? theme.colors.primary 
-                : theme.colors.border,
-          }}
         >
           {leftIcon && <View className="mr-2">{leftIcon}</View>}
           
@@ -136,15 +126,13 @@ const TextInput = React.forwardRef<RNTextInput, TextInputProps>(
             onFocus={handleFocus}
             onBlur={handleBlur}
             editable={editable}
-            placeholderTextColor={theme.colors.text + '40'}
             className={cn(
-              'flex-1',
+              'flex-1 text-foreground placeholder:text-muted-foreground',
               textInputVariants({ variant, size, state }),
               'border-0 bg-transparent',
               textInputClassName,
               className
             )}
-            style={{ color: theme.colors.text }}
             {...props}
           />
           
@@ -178,7 +166,5 @@ const TextInput = React.forwardRef<RNTextInput, TextInputProps>(
     );
   }
 );
-
-TextInput.displayName = 'TextInput';
 
 export { TextInput, TextInputClassContext, textInputVariants };

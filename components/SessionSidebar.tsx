@@ -27,7 +27,7 @@ export function SessionSidebar(props: DrawerContentComponentProps) {
   };
 
   return (
-    <View style={{ flex: 1, paddingTop: 50 }} className="p-container">
+    <View className="flex-1 pt-[50px] p-container">
       <Button onPress={handleCreateNewSession} variant="primary" className="mb-4">
         <Text>New Chat</Text>
       </Button>

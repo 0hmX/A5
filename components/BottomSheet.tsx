@@ -18,9 +18,8 @@ export const CustomBottomSheet = forwardRef<BottomSheetModal, CustomBottomSheetP
       snapPoints={memoizedSnapPoints}
       handleIndicatorStyle={{ backgroundColor: theme.colors.border }}
       backgroundStyle={{ backgroundColor: theme.colors.card }}
-      onChange={(index) => console.log('CustomBottomSheet: onChange', index)}
     >
-      <BottomSheetView style={{ flex: 1, height: '100%' }}>
+      <BottomSheetView className="flex-1 h-full">
         {children}
       </BottomSheetView>
     </BottomSheetModal>

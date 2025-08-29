@@ -2,6 +2,8 @@ import { CustomBottomSheet } from '@/components/BottomSheet';
 import ModelManagement from '@/components/ModelManagement';
 import { useAnimation } from '@/context/AnimationContext';
 import { Feather } from '@expo/vector-icons';
+import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
 import { DrawerNavigationProp } from '@react-navigation/drawer';
 import * as Clipboard from 'expo-clipboard';
@@ -169,11 +171,10 @@ export default function ChatScreen() {
   };
 
   const renderContent = () => {
-    console.log('renderContent: modelState', modelState);
     if (!modelState || modelState.status === 'not_downloaded') {
       return (
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-          <Text className='text-white'>Model not downloaded.</Text>
+        <View className="flex-1 justify-center items-center">
+          <Text className="text-foreground">Model not downloaded.</Text>
         </View>
       );
     }
@@ -195,13 +196,15 @@ export default function ChatScreen() {
           renderItem={({ item }) => (
             <Pressable
               onLongPress={() => Clipboard.setStringAsync(item.content)}
-              className={`p-3 rounded-lg mb-2 max-w-[80%] ${item.role === 'user' ? 'self-end' : 'self-start'
-                }`}
-              style={{
-                backgroundColor: item.role === 'user' ? theme.colors.primary : theme.colors.card
-              }}
+              className={`p-3 rounded-lg mb-2 max-w-[80%] ${
+                item.role === 'user' ? 'self-end bg-primary' : 'self-start bg-card'
+              }`}
             >
-              <Text style={{ color: item.role === 'user' ? theme.colors.background : theme.colors.text }}>
+              <Text
+                className={
+                  item.role === 'user' ? 'text-primary-foreground' : 'text-card-foreground'
+                }
+              >
                 {item.content}
               </Text>
               {item.role === 'model' && (
@@ -228,26 +231,19 @@ export default function ChatScreen() {
           <ActivityIndicator size="large" color={theme.colors.primary} className="my-2.5" />
         )}
         {appStatus === 'ERROR' && (
-          <View
-            className="p-2.5 rounded-md m-2.5 items-center"
-            style={{ backgroundColor: theme.colors.notification }}
-          >
-            <Text style={{ color: theme.colors.background }} className="mb-1.5">
-              {errorMessage}
-            </Text>
+          <View className="p-2.5 rounded-md m-2.5 items-center bg-destructive">
+            <Text className="text-destructive-foreground mb-1.5">{errorMessage}</Text>
             <Button onPress={clearError}>
               <Text>Clear</Text>
             </Button>
           </View>
         )}
         <View
-          className="flex-col gap-2 p-2 border-t"
+          className="flex-col gap-2 p-2 border-t border-border"
           style={{
-            borderColor: theme.colors.border,
-            paddingBottom: insets.bottom + 8
+            paddingBottom: insets.bottom + 8,
           }}
         >
-
           <View className="flex-row gap-2 items-center w-full">
             <TextInput
               placeholder="Type your message..."
@@ -266,9 +262,10 @@ export default function ChatScreen() {
             <Button
               onPress={handleSend}
               disabled={appStatus !== 'IDLE' || !isModelLoaded || !inputText.trim()}
-              size="md"
+              size="icon"
+              className="bg-background"
             >
-              <Text>Send</Text>
+              <MaterialIcons name="send" size={24} color={theme.colors.text} />
             </Button>
           </View>
         </View>
@@ -278,23 +275,28 @@ export default function ChatScreen() {
 
   return (
     <KeyboardAvoidingView
-      style={{ flex: 1 }}
-      behavior={Platform.OS === "ios" ? "padding" : "padding"}
+      className="flex-1"
+      behavior={Platform.OS === 'ios' ? 'padding' : 'padding'}
       keyboardVerticalOffset={40}
     >
-      <Animated.View style={[{ flex: 1, overflow: 'hidden', backgroundColor: theme.colors.background }, animatedStyle]}>
-        <View style={{ paddingTop: insets.top, paddingHorizontal: 16, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Button variant="ghost" onPress={() => navigation.openDrawer()}>
+      <Animated.View
+        className="flex-1 overflow-hidden bg-background"
+        style={animatedStyle}
+      >
+        <View
+          className="px-2 flex-row justify-between items-center"
+          style={{ paddingTop: insets.top }}
+        >
+          <Button className="gap-2" variant="ghost" onPress={() => navigation.openDrawer()}>
             <Feather name="menu" size={24} color={theme.colors.text} />
+            <Text variant={'display'}>A5</Text>
           </Button>
           <Text variant="heading">Chat</Text>
           <Button variant="ghost" onPress={handlePresentModalPress}>
-            <Feather name="box" size={24} color={theme.colors.text} />
+            <FontAwesome5 name="brain" size={24} color={theme.colors.text} />
           </Button>
         </View>
-        <View style={{ flex: 1 }}>
-          {renderContent()}
-        </View>
+        <View className="flex-1">{renderContent()}</View>
       </Animated.View>
       <CustomBottomSheet ref={bottomSheetRef}>
         <ModelManagement />

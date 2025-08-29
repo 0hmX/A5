@@ -32,13 +32,8 @@ const Dot = ({ delay }: { delay: number }) => {
 
   return (
     <Animated.View
-      style={{
-        width: 8,
-        height: 8,
-        borderRadius: 4,
-        backgroundColor: colors.text,
-        transform: [{ translateY }],
-      }}
+      className="w-2 h-2 rounded-full bg-foreground"
+      style={[{ transform: [{ translateY }] }]}
     />
   );
 };
