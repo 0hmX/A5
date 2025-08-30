@@ -38,9 +38,9 @@ export function SessionSidebar(props: DrawerContentComponentProps) {
           <TextInput placeholder='Search' variant={"default"} size={"md"} containerClassName='mb-0 flex-1' className='flex-1' showClear={false} />
           <Pressable
             onPress={handleCreateNewSession}
-            className="bg-primary p-2 rounded-lg items-center justify-center w-10 h-10"
+            className="bg-accent p-2 rounded-lg items-center justify-center w-10 h-10"
           >
-            <Text className="text-primary-foreground text-2xl">+</Text>
+            <Text className="text-accent-foreground text-2xl">+</Text>
           </Pressable>
         </View>
         <Button onPress={() => { }} variant="secondary">

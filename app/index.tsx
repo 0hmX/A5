@@ -224,12 +224,12 @@ export default function ChatScreen() {
           <Pressable
             onLongPress={() => Clipboard.setStringAsync(item.content)}
             className={`p-3 rounded-lg mb-2 max-w-[80%] ${
-              item.role === 'user' ? 'self-end bg-primary' : 'self-start bg-card'
+              item.role === 'user' ? 'self-end bg-accent' : 'self-start bg-card'
             }`}
           >
             <Text
               className={
-                item.role === 'user' ? 'text-primary-foreground' : 'text-card-foreground'
+                item.role === 'user' ? 'text-accent-foreground' : 'text-card-foreground'
               }
             >
               {item.content}
