@@ -192,9 +192,9 @@ export default function ChatScreen() {
     addMessageToSession(activeSessionId, modelMessage);
     setAppStatus('IDLE');
   };
-  const foreground = useUnstableNativeVariable('--foreground');
-  const primaryForeground = useUnstableNativeVariable('--primary-foreground');
-  const mutedForeground = useUnstableNativeVariable('--muted-foreground');
+  const foreground = `rgb(${useUnstableNativeVariable('--foreground')})`;
+  const primaryForeground = `rgb(${useUnstableNativeVariable('--primary-foreground')})`;
+  const mutedForeground = `rba(${useUnstableNativeVariable('--muted-foreground')})`;
 
   const isSendDisabled = appStatus !== 'IDLE' || !isModelLoaded || !inputText.trim();
 
