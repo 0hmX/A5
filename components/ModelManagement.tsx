@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import { useUnstableNativeVariable } from 'nativewind';
 import React, { useCallback, useEffect } from 'react';
 import { Pressable, SectionList, View } from 'react-native';
 
@@ -21,6 +22,9 @@ const ModelItem = React.memo<ModelItemProps>(({ item, isActive, onSetActive }) =
   const { status, progress, speedMbps, downloadModel, deleteModel } = useModelManager(item.model.name);
 
   const formattedSize = item.model.size < 1024 ? `${item.model.size} MB` : `${(item.model.size / 1024).toFixed(2)} GB`;
+  const destructive = useUnstableNativeVariable('--destructive');
+  const primary = useUnstableNativeVariable('--primary');
+
 
   return (
     <View className="bg-card flex-row justify-between items-center p-4 rounded-lg mb-3">
@@ -44,19 +48,19 @@ const ModelItem = React.memo<ModelItemProps>(({ item, isActive, onSetActive }) =
       <View className="ml-4 flex-row items-center gap-2">
         {status === 'downloaded' && !isActive && (
           <>
-            <Pressable onPress={() => deleteModel()} className="p-2 rounded-full bg-destructive/10 text-destructive">
-              <Ionicons name="trash" size={18} />
+            <Pressable onPress={() => deleteModel()} className="p-2 rounded-full text-destructive">
+              <Ionicons color={destructive} name="trash" size={18} />
             </Pressable>
             <Pressable onPress={() => onSetActive(item.model.name)} className="p-2 rounded-full bg-primary/10 text-primary">
-              <Ionicons name="checkmark" size={18} />
+              <Ionicons color={primary} name="checkmark" size={18} />
             </Pressable>
           </>
         )}
         {status === 'downloaded' && isActive && (
           <>
             <Text className="text-body font-bold text-primary">Active</Text>
-            <Pressable onPress={() => deleteModel()} className="p-2 rounded-full bg-destructive/10 ml-2 text-destructive">
-              <Ionicons name="trash" size={18} />
+            <Pressable onPress={() => deleteModel()} className="p-2 rounded-full ml-2 text-destructive">
+              <Ionicons color={destructive} name="trash" size={18} />
             </Pressable>
           </>
         )}

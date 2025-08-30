@@ -8,6 +8,7 @@ import { BottomSheetModal } from '@gorhom/bottom-sheet';
 import { DrawerNavigationProp } from '@react-navigation/drawer';
 import * as Clipboard from 'expo-clipboard';
 import { useNavigation } from 'expo-router';
+import { useUnstableNativeVariable } from 'nativewind';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { TypingIndicator } from '@/components/TypingIndicator';
@@ -166,6 +167,8 @@ export default function ChatScreen() {
     addMessageToSession(activeSessionId, modelMessage);
     setAppStatus('IDLE');
   };
+  const foreground = useUnstableNativeVariable('--foreground');
+
 
   const renderContent = () => {
     if (!modelState || modelState.status === 'not_downloaded') {
@@ -262,7 +265,7 @@ export default function ChatScreen() {
               size="icon"
               className="bg-background text-foreground"
             >
-              <MaterialIcons name="send" size={24} />
+              <MaterialIcons color={foreground} name="send" size={24} />
             </Button>
           </View>
         </View>
@@ -285,12 +288,11 @@ export default function ChatScreen() {
           style={{ paddingTop: insets.top }}
         >
           <Button className="gap-2" variant="ghost" onPress={() => navigation.openDrawer()}>
-            <Feather name="menu" size={24} />
-            <Text className="text-display text-foreground">A5</Text>
+            <Feather color={foreground} name="menu" size={24} />
           </Button>
-          <Text className="text-heading text-foreground">Chat</Text>
+            <Text className="text-foreground">A5.local</Text>
           <Button variant="ghost" onPress={handlePresentModalPress}>
-            <FontAwesome5 name="brain" size={24} />
+            <FontAwesome5 name="brain" size={24} color={foreground} />
           </Button>
         </View>
         <View className="flex-1">{renderContent()}</View>

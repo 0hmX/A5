@@ -50,35 +50,6 @@ These classes are defined in `tailwind.config.js` and are the single source of t
 
 use this taillwidcss feature to handel darkmode
 
-**When to use it:**
-
-1.  Passing a color to a third-party component prop that requires a raw color string (e.g., `iconColor`, `trackColor`).
-2.  Applying a color to a non-standard style property that cannot be targeted by Tailwind classes (e.g., `thumbColor` on a `Switch`).
-
-**How to use it:**
-
-```typescript
-import { useTheme } from '@/hooks/useTheme';
-
-// Inside your component:
-const { colors } = useTheme();
-
-// Example for a non-nativewind component:
-<SomeLibraryComponent trackColor={colors.primary} />
-
-// Example for a style property not supported by NativeWind:
-<ActivityIndicator color={colors.primary} />
-```
-
-The `colors` object contains the following properties derived from the current theme (light/dark):
-
--   `colors.primary`: The primary interactive color.
--   `colors.background`: The main screen background color.
--   `colors.card`: The background color for card elements.
--   `colors.text`: The default text color.
--   `colors.border`: The default border color.
--   `colors.notification`: The color for notification banners or destructive actions.
-
 **Do not use this hook to apply colors to standard `style` properties like `backgroundColor` or `color` on a `<View>` or `<Text>`. Use the utility classes for that.**
 
 ## Code Style

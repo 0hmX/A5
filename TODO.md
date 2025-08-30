@@ -1,7 +1,23 @@
-- [ ] Impliment theme to hanel icon color using the sepcial color prop
+### Benchmark Feature
+- Add model performance benchmarking
+  - Measure tokens/second for each model on device
+  - Make accessible from sidebar navigation
 
-currenlty we are setting the colro={"white"} we need something global may be in _layouts.tsx
+### Sidebar Redesign
+- **Visual improvements**
+  - Make active state more subtle
+- **Layout structure** (top to bottom):
+  1. Search bar
+  2. Benchmark access point
+  3. Sessions list (scrollable area)
+  4. Settings page access (bottom-pinned)
 
-- [ ] Impiment a benachmark feature;
+### Design System Alignment
+- Match OpenAI's design patterns
+  - Review and adjust padding values
+  - Update border-radius consistency
+  - Implement blur effects where appropriate
+  - Refine dark mode touch interactions (make more subtle)
 
-to meaure tokens/second for a model on a device
+### Performance
+- Fix input area lag/performance issues
