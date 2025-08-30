@@ -1,22 +1,20 @@
-import { GradientBackground } from '@/components/GradientBackground';
 import { CustomBottomSheet } from '@/components/BottomSheet';
+import { GradientBackground } from '@/components/GradientBackground';
 import ModelManagement from '@/components/ModelManagement';
 import { useAnimation } from '@/context/AnimationContext';
 import { Feather } from '@expo/vector-icons';
 import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
-import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
 import * as Clipboard from 'expo-clipboard';
 import { useNavigation } from 'expo-router';
 import { useUnstableNativeVariable } from 'nativewind';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import { ChatInput } from '@/components/ChatInput';
 import { TypingIndicator } from '@/components/TypingIndicator';
 
 import { Button } from '@/components/nativewindui/Button';
 import { Text } from '@/components/nativewindui/Text';
-import { TextInput } from '@/components/TextInput';
-import { cn } from '@/lib/cn';
 import useAppStatusStore from '@/store/appStatusStore';
 import useChatStore from '@/store/chatStore';
 import useDbStore from '@/store/dbStore';
@@ -26,9 +24,8 @@ import { DrawerNavigationProp } from '@react-navigation/drawer';
 import { ActivityIndicator, FlatList, Pressable, View } from 'react-native';
 import { useKeyboardHandler } from 'react-native-keyboard-controller';
 import Animated, { useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { v4 as uuidv4 } from 'uuid';
-
 type RootDrawerParamList = {
   index: undefined;
   sessionManager: undefined;
@@ -205,10 +202,6 @@ export default function ChatScreen() {
     setAppStatus('IDLE');
   };
   const foreground = `rgb(${useUnstableNativeVariable('--foreground')})`;
-  const primaryForeground = `rgb(${useUnstableNativeVariable('--primary-foreground')})`;
-  const mutedForeground = `rba(${useUnstableNativeVariable('--muted-foreground')})`;
-
-  const isSendDisabled = appStatus !== 'IDLE' || !isModelLoaded || !inputText.trim();
 
   const renderContent = () => {
     if (!modelState || modelState.status === 'not_downloaded') {
@@ -235,9 +228,8 @@ export default function ChatScreen() {
         renderItem={({ item }) => (
           <Pressable
             onLongPress={() => Clipboard.setStringAsync(item.content)}
-            className={`p-3 rounded-lg mb-2 max-w-[80%] ${
-              item.role === 'user' ? 'self-end bg-accent' : 'self-start bg-card'
-            }`}
+            className={`p-3 rounded-lg mb-2 max-w-[80%] ${item.role === 'user' ? 'self-end bg-accent' : 'self-start bg-card'
+              }`}
           >
             <Text
               className={
@@ -270,7 +262,7 @@ export default function ChatScreen() {
   };
 
   return (
-    <>
+    <SafeAreaView className="flex-1">
       <Animated.View
         className="flex-1 overflow-hidden"
         style={animatedDrawerStyle}
@@ -283,7 +275,7 @@ export default function ChatScreen() {
             <Button className="gap-2" variant="ghost" onPress={() => navigation.openDrawer()}>
               <Feather color={foreground} name="menu" size={24} />
             </Button>
-              <Text className="text-foreground">A5 {"dot"} local</Text>
+            <Text className="text-foreground">A5 {"dot"} localhost</Text>
             <Button variant="ghost" onPress={handlePresentModalPress}>
               <FontAwesome5 name="brain" size={24} color={foreground} />
             </Button>
@@ -300,34 +292,14 @@ export default function ChatScreen() {
               </Button>
             </View>
           )}
-          <View
-            className="flex-col gap-2 p-2 border-t border-border"
-            style={{ paddingBottom: insets.bottom }}
-          >
-            <View className="flex-row gap-2 items-center w-full">
-              <TextInput
-                placeholder="Type your message..."
-                value={inputText}
-                onChangeText={setInputText}
-                onClear={() => setInputText('')}
-                editable={isModelLoaded}
-                returnKeyType="send"
-                onSubmitEditing={handleSend}
-                multiline
-                variant="default"
-                size="md"
-                containerClassName="flex-1 mb-0"
-                autoFocus={true}
-              />
-              <Button
-                onPress={handleSend}
-                disabled={isSendDisabled}
-                size="icon"
-                className={cn(isSendDisabled ? 'bg-muted' : 'bg-primary')}
-              >
-                <MaterialIcons name="send" size={24} color={isSendDisabled ? mutedForeground : primaryForeground} />
-              </Button>
-            </View>
+          <View style={{ paddingBottom: insets.bottom }}>
+            <ChatInput
+              inputText={inputText}
+              onInputChange={setInputText}
+              onSend={handleSend}
+              isModelLoaded={isModelLoaded}
+              isGenerating={appStatus === 'GENERATING'}
+            />
           </View>
           <Animated.View style={animatedKeyboardSpacerStyle} />
         </GradientBackground>
@@ -335,6 +307,6 @@ export default function ChatScreen() {
       <CustomBottomSheet ref={bottomSheetRef}>
         <ModelManagement />
       </CustomBottomSheet>
-    </>
+    </SafeAreaView>
   );
 }
