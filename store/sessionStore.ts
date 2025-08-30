@@ -10,6 +10,7 @@ interface SessionState {
     createNewSession: () => Promise<string | null>;
     setActiveSession: (sessionId: string) => void;
     addMessageToSession: (sessionId: string, message: ChatMessage) => Promise<void>;
+    renameSession: (sessionId: string, newName: string) => Promise<void>;
 }
 
 const useSessionStore = create<SessionState>((set, get) => ({
@@ -21,7 +22,6 @@ const useSessionStore = create<SessionState>((set, get) => ({
         const [allDbSessions, error] = await getAllSessions();
         if (error) {
             console.error('SessionStore: Error getting all sessions:', error.message);
-            // You might want to set an error state here
             return;
         }
         console.log('SessionStore: Got all sessions from DB:', allDbSessions);
@@ -34,7 +34,6 @@ const useSessionStore = create<SessionState>((set, get) => ({
             const [createdId, createError] = await createSession(newSessionId, 'Default Session');
             if (createError) {
                 console.error('SessionStore: Error creating default session:', createError.message);
-                // You might want to set an error state here
                 return;
             }
             const newSession: ChatSession = {
@@ -52,7 +51,6 @@ const useSessionStore = create<SessionState>((set, get) => ({
                 const [messages, messagesError] = await getMessagesForSession(dbSession.id);
                 if (messagesError) {
                     console.error(`SessionStore: Error getting messages for session ${dbSession.id}:`, messagesError.message);
-                    // You might want to set an error state here
                     return;
                 }
                 chatSessions.push({
@@ -69,11 +67,10 @@ const useSessionStore = create<SessionState>((set, get) => ({
         console.log('SessionStore: createNewSession started');
         const { createSession } = useDbStore.getState();
         const newSessionId = uuidv4();
-        const newSessionName = `Session ${get().sessions.length + 1}`;
+        const newSessionName = `New Session`;
         console.log(`SessionStore: Creating session in DB with id: ${newSessionId}`);
         const [createdId, createError] = await createSession(newSessionId, newSessionName);
         if (createError) {
-            // You might want to set an error state here
             return null;
         }
         const newSession: ChatSession = {
@@ -81,7 +78,7 @@ const useSessionStore = create<SessionState>((set, get) => ({
             name: newSessionName,
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
-            history: [], // Add history back for in-memory state
+            history: [],
         };
         console.log('SessionStore: Calling set state to add new session');
         set((state) => {
@@ -93,13 +90,11 @@ const useSessionStore = create<SessionState>((set, get) => ({
     },
     setActiveSession: (sessionId: string) => {
         set({ activeSessionId: sessionId });
-        // Load messages for the newly active session
         const sessionToActivate = get().sessions.find(s => s.id === sessionId);
         if (sessionToActivate && !sessionToActivate.history.length) {
             const { getMessagesForSession } = useDbStore.getState();
             getMessagesForSession(sessionId).then(([messages, error]) => {
                 if (error) {
-                    // You might want to set an error state here
                     return;
                 }
                 set((state) => ({
@@ -121,7 +116,6 @@ const useSessionStore = create<SessionState>((set, get) => ({
             message.generationTimeMs
         );
         if (error) {
-            // You might want to set an error state here
             return;
         }
         set((state) => ({
@@ -131,6 +125,23 @@ const useSessionStore = create<SessionState>((set, get) => ({
                     : session
             ),
         }));
+    },
+    renameSession: async (sessionId: string, newName: string) => {
+        console.log(`SessionStore: Attempting to rename session ${sessionId} to "${newName}"`);
+        const { updateSessionName } = useDbStore.getState();
+        const [_, error] = await updateSessionName(sessionId, newName);
+        if (error) {
+            console.error('SessionStore: Error renaming session in DB:', error.message);
+            return;
+        }
+        set((state) => {
+            console.log(`SessionStore: Successfully renamed session ${sessionId} in state.`);
+            return {
+                sessions: state.sessions.map((session) =>
+                    session.id === sessionId ? { ...session, name: newName } : session
+                ),
+            }
+        });
     },
 }));
 

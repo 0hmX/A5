@@ -54,7 +54,7 @@ const useGradualAnimation = () => {
 export default function ChatScreen() {
   const { activeModel, setActiveModel } = useChatStore();
   const { models, isInitialized, loadedModelName, loadModel, generate } = useModelStore();
-  const { sessions, activeSessionId, addMessageToSession, initializeSessions } = useSessionStore();
+  const { sessions, activeSessionId, addMessageToSession, initializeSessions, renameSession } = useSessionStore();
   const { appStatus, setAppStatus, errorMessage, setError, clearError } = useAppStatusStore();
   const { drawerProgress } = useAnimation();
 
@@ -164,6 +164,9 @@ export default function ChatScreen() {
       createdAt: new Date().toISOString(),
     };
 
+    const isFirstMessage = activeSession && activeSession.history.length === 0;
+    console.log(`[handleSend] Is this the first message? ${isFirstMessage}. History length: ${activeSession?.history.length}`);
+
     addMessageToSession(activeSessionId, userMessage);
     setInputText('');
     setAppStatus('GENERATING');
@@ -190,6 +193,14 @@ export default function ChatScreen() {
     };
 
     addMessageToSession(activeSessionId, modelMessage);
+
+    if (isFirstMessage) {
+      console.log('[handleSend] Renaming condition met. Calling renameSession.');
+      const newName = modelMessage.content.split(' ').slice(0, 10).join(' ');
+      console.log(`[handleSend] New session name: "${newName}"`);
+      renameSession(activeSessionId, newName);
+    }
+
     setAppStatus('IDLE');
   };
   const foreground = `rgb(${useUnstableNativeVariable('--foreground')})`;
@@ -297,7 +308,7 @@ export default function ChatScreen() {
               value={inputText}
               onChangeText={setInputText}
               onClear={() => setInputText('')}
-              editable={appStatus === 'IDLE' && isModelLoaded}
+              editable={isModelLoaded}
               returnKeyType="send"
               onSubmitEditing={handleSend}
               multiline

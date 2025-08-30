@@ -62,6 +62,8 @@ export function SessionSidebar(props: DrawerContentComponentProps) {
                       ? 'text-accent-foreground'
                       : 'text-foreground'
                   }
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
                 >
                   {item.name}
                 </Text>

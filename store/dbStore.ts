@@ -26,6 +26,7 @@ interface DbState {
   getMessagesForSession: (sessionId: string) => Promise<[Message[], null] | [null, Error]>;
   insertMessage: (id: string, sessionId: string, role: 'user' | 'model', content: string, modelName?: string | null, generationTimeMs?: number | null) => Promise<[string, null] | [null, Error]>;
   deleteSession: (sessionId: string) => Promise<[boolean, null] | [null, Error]>;
+  updateSessionName: (sessionId: string, newName: string) => Promise<[boolean, null] | [null, Error]>;
   getModelStatus: (modelName: string) => Promise<[{ status: string, localPath: string | null } | null, Error | null]>;
   setModelStatus: (modelName: string, status: string, localPath: string | null) => Promise<[boolean, null] | [null, Error]>;
   getAllModelStatus: () => Promise<[{ modelName: string, status: string, localPath: string | null }[], Error | null]>;
@@ -132,8 +133,8 @@ const useDbStore = create<DbState>((set, get) => ({
         sessionId,
         role,
         content,
-        modelName,
-        generationTimeMs
+        modelName!,
+        generationTimeMs!
       );
       return [id, null];
     } catch (error) {
@@ -147,6 +148,18 @@ const useDbStore = create<DbState>((set, get) => ({
     }
     try {
       const result = await db.runAsync('DELETE FROM sessions WHERE id = ?;', sessionId);
+      return [result.changes > 0, null];
+    } catch (error) {
+      return [null, error as Error];
+    }
+  },
+  updateSessionName: async (sessionId, newName) => {
+    const { db } = get();
+    if (!db) {
+      return [null, new Error('Database not initialized.')];
+    }
+    try {
+      const result = await db.runAsync('UPDATE sessions SET name = ?, updatedAt = datetime(\'now\', \'localtime\') WHERE id = ?;', newName, sessionId);
       return [result.changes > 0, null];
     } catch (error) {
       return [null, error as Error];
@@ -221,9 +234,8 @@ const useDbStore = create<DbState>((set, get) => ({
       return [null, new Error('Database not initialized.')];
     }
     try {
-      const result = await db.getFirstAsync<{ modelName: string }>(
-        'SELECT modelName FROM model_usage_history ORDER BY lastUsedAt DESC LIMIT 1;'
-      );
+      const result = await db.getFirstAsync<{ modelName: string }>
+        ('SELECT modelName FROM model_usage_history ORDER BY lastUsedAt DESC LIMIT 1;');
       return [result?.modelName || null, null];
     } catch (error) {
       return [null, error as Error];
