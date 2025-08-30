@@ -1,4 +1,7 @@
 ### Redising to use heaveily use accent colors
+- we need to gnerate the reset of the color from the accent color of systme
+- i want to use this color to make a good bg for it; and everthing else;
+- the desing system will need a overhall
 
 ### After sending a meesage the keyboard is also disabled
 only the send button needs to be disabled;

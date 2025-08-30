@@ -9,7 +9,7 @@ import { Theme } from '@react-navigation/native';
 export const AppLightTheme: Theme = {
   dark: false,
   colors: {
-    primary: 'rgb(0, 123, 254)',
+    primary: 'rgb(255, 40, 84)',
     background: 'rgb(242, 242, 247)',
     card: 'rgb(255, 255, 255)',
     text: 'rgb(0, 0, 0)',
@@ -21,7 +21,7 @@ export const AppLightTheme: Theme = {
 export const AppDarkTheme: Theme = {
   dark: true,
   colors: {
-    primary: 'rgb(3, 133, 255)',
+    primary: 'rgb(255, 52, 95)',
     background: 'rgb(0, 0, 0)',
     card: 'rgb(21, 21, 24)',
     text: 'rgb(255, 255, 255)',
