@@ -1,3 +1,4 @@
+import { GradientBackground } from '@/components/GradientBackground';
 import { CustomBottomSheet } from '@/components/BottomSheet';
 import ModelManagement from '@/components/ModelManagement';
 import { useAnimation } from '@/context/AnimationContext';
@@ -271,63 +272,65 @@ export default function ChatScreen() {
   return (
     <>
       <Animated.View
-        className="flex-1 overflow-hidden bg-background"
+        className="flex-1 overflow-hidden"
         style={animatedDrawerStyle}
       >
-        <View
-          className="px-2 flex-row justify-between items-center"
-          style={{ paddingTop: insets.top }}
-        >
-          <Button className="gap-2" variant="ghost" onPress={() => navigation.openDrawer()}>
-            <Feather color={foreground} name="menu" size={24} />
-          </Button>
-            <Text className="text-foreground">A5 {"dot"} local</Text>
-          <Button variant="ghost" onPress={handlePresentModalPress}>
-            <FontAwesome5 name="brain" size={24} color={foreground} />
-          </Button>
-        </View>
-        <View className="flex-1">{renderContent()}</View>
-        {appStatus === 'LOADING_MODEL' && (
-          <ActivityIndicator size="large" className="my-2.5 text-primary" />
-        )}
-        {appStatus === 'ERROR' && (
-          <View className="p-2.5 rounded-md m-2.5 items-center bg-destructive">
-            <Text className="text-destructive-foreground mb-1.5">{errorMessage}</Text>
-            <Button onPress={clearError}>
-              <Text>Clear</Text>
+        <GradientBackground className="flex-1">
+          <View
+            className="px-2 flex-row justify-between items-center"
+            style={{ paddingTop: insets.top }}
+          >
+            <Button className="gap-2" variant="ghost" onPress={() => navigation.openDrawer()}>
+              <Feather color={foreground} name="menu" size={24} />
+            </Button>
+              <Text className="text-foreground">A5 {"dot"} local</Text>
+            <Button variant="ghost" onPress={handlePresentModalPress}>
+              <FontAwesome5 name="brain" size={24} color={foreground} />
             </Button>
           </View>
-        )}
-        <View
-          className="flex-col gap-2 p-2 border-t border-border"
-          style={{ paddingBottom: insets.bottom }}
-        >
-          <View className="flex-row gap-2 items-center w-full">
-            <TextInput
-              placeholder="Type your message..."
-              value={inputText}
-              onChangeText={setInputText}
-              onClear={() => setInputText('')}
-              editable={isModelLoaded}
-              returnKeyType="send"
-              onSubmitEditing={handleSend}
-              multiline
-              variant="default"
-              size="md"
-              containerClassName="flex-1 mb-0"
-              autoFocus={true}
-            />
-            <Button
-              onPress={handleSend}
-              disabled={isSendDisabled}
-              size="icon"
-              className={cn(isSendDisabled ? 'bg-muted' : 'bg-primary')}
-            >
-              <MaterialIcons name="send" size={24} color={isSendDisabled ? mutedForeground : primaryForeground} />
-            </Button>
+          <View className="flex-1">{renderContent()}</View>
+          {appStatus === 'LOADING_MODEL' && (
+            <ActivityIndicator size="large" className="my-2.5 text-primary" />
+          )}
+          {appStatus === 'ERROR' && (
+            <View className="p-2.5 rounded-md m-2.5 items-center bg-destructive">
+              <Text className="text-destructive-foreground mb-1.5">{errorMessage}</Text>
+              <Button onPress={clearError}>
+                <Text>Clear</Text>
+              </Button>
+            </View>
+          )}
+          <View
+            className="flex-col gap-2 p-2 border-t border-border"
+            style={{ paddingBottom: insets.bottom }}
+          >
+            <View className="flex-row gap-2 items-center w-full">
+              <TextInput
+                placeholder="Type your message..."
+                value={inputText}
+                onChangeText={setInputText}
+                onClear={() => setInputText('')}
+                editable={isModelLoaded}
+                returnKeyType="send"
+                onSubmitEditing={handleSend}
+                multiline
+                variant="default"
+                size="md"
+                containerClassName="flex-1 mb-0"
+                autoFocus={true}
+              />
+              <Button
+                onPress={handleSend}
+                disabled={isSendDisabled}
+                size="icon"
+                className={cn(isSendDisabled ? 'bg-muted' : 'bg-primary')}
+              >
+                <MaterialIcons name="send" size={24} color={isSendDisabled ? mutedForeground : primaryForeground} />
+              </Button>
+            </View>
           </View>
-        </View>
-        <Animated.View style={animatedKeyboardSpacerStyle} />
+          <Animated.View style={animatedKeyboardSpacerStyle} />
+        </GradientBackground>
       </Animated.View>
       <CustomBottomSheet ref={bottomSheetRef}>
         <ModelManagement />

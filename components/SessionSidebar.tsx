@@ -1,5 +1,7 @@
 import useSessionStore from '@/store/sessionStore';
+import { AntDesign, Feather, SimpleLineIcons } from '@expo/vector-icons';
 import { DrawerContentComponentProps, DrawerNavigationProp } from '@react-navigation/drawer';
+import { useUnstableNativeVariable } from 'nativewind';
 import { FlatList, Pressable, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button } from './nativewindui/Button';
@@ -15,6 +17,7 @@ export function SessionSidebar(props: DrawerContentComponentProps) {
   const { sessions, activeSessionId, setActiveSession, createNewSession } = useSessionStore();
   const { navigation } = props;
   const insets = useSafeAreaInsets();
+  const foreground = `rgb(${useUnstableNativeVariable('--foreground')})`;
 
   const handleSessionSelect = (sessionId: string) => {
     setActiveSession(sessionId);
@@ -31,20 +34,19 @@ export function SessionSidebar(props: DrawerContentComponentProps) {
   return (
     <View
       className="flex-1 p-container justify-between"
-      style={{ paddingTop: insets.top, paddingBottom: insets.bottom }}
+      style={{ paddingTop: insets.top + 10, paddingBottom: insets.bottom }}
     >
       <View className="flex-1 space-y-4 gap-2">
         <View className="flex-row items-center gap-2">
           <TextInput placeholder='Search' variant={"default"} size={"md"} containerClassName='mb-0 flex-1' className='flex-1' showClear={false} />
-          <Pressable
-            onPress={handleCreateNewSession}
-            className="bg-accent p-2 rounded-lg items-center justify-center w-10 h-10"
-          >
-            <Text className="text-accent-foreground text-2xl">+</Text>
-          </Pressable>
         </View>
-        <Button onPress={() => { }} variant="secondary">
-          <Text className="text-primary-foreground">Benchmark</Text>
+        <Button className='gap-2 justify-start' onPress={handleCreateNewSession} variant="ghost">
+          <SimpleLineIcons name="note" size={14} color={foreground} />
+          <Text className="text-foreground">New Session</Text>
+        </Button>
+        <Button className='gap-2 justify-start' onPress={() => { }} variant="ghost">
+          <AntDesign name="hearto" size={14} color={foreground} />
+          <Text className="text-foreground">Benchmark</Text>
         </Button>
         <View className="flex-1">
           <FlatList
@@ -73,8 +75,9 @@ export function SessionSidebar(props: DrawerContentComponentProps) {
         </View>
       </View>
       <View className="pt-4">
-        <Button onPress={() => { }} variant="secondary">
-          <Text className='text-primary-foreground'>Settings</Text>
+        <Button  className='gap-2 justify-start' onPress={() => { }} variant="ghost">
+          <Feather name="settings" size={14} color={foreground} />
+          <Text className='text-foreground'>Settings</Text>
         </Button>
       </View>
     </View>
