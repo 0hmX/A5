@@ -270,7 +270,6 @@ export default function ChatScreen() {
         <GradientBackground className="flex-1">
           <View
             className="px-2 flex-row justify-between items-center"
-            style={{ paddingTop: insets.top }}
           >
             <Button className="gap-2" variant="ghost" onPress={() => navigation.openDrawer()}>
               <Feather color={foreground} name="menu" size={24} />
