@@ -6,7 +6,7 @@ import { Text, TextClassContext } from '@/components/nativewindui/Text';
 import { cn } from '@/lib/cn';
 
 const buttonVariants = cva(
-  'flex-row items-center justify-center rounded-md active:opacity-80',
+  'flex-row items-center justify-center rounded-lg active:opacity-80',
   {
     variants: {
       variant: {
@@ -17,8 +17,8 @@ const buttonVariants = cva(
       },
       size: {
         md: 'h-12 px-5 py-2',
-        sm: 'h-10 rounded-md px-3',
-        lg: 'h-14 rounded-md px-8',
+        sm: 'h-10 rounded-lg px-3',
+        lg: 'h-14 rounded-lg px-8',
         icon: 'h-12 w-12',
       },
     },

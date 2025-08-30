@@ -41,10 +41,22 @@ These classes are defined in `tailwind.config.js` and are the single source of t
 -   **`bg-popover`**: Use for the background of popovers or floating menus.
 -   **`text-popover-foreground`**: Use for text within popovers.
 
-#### Typography & Spacing
+#### Typography, Spacing, and Sizing
 
--   **Typography**: Always use the predefined text size classes: `text-display`, `text-heading`, `text-subheading`, `text-body-lg`, `text-body`, `text-caption`, `text-label`.
--   **Spacing**: Always use the predefined spacing scale for `margin`, `padding`, and `gap`: `p-1`, `m-4`, `gap-2`, etc.
+-   **Typography**: Always use the predefined text size classes from the theme: `text-display`, `text-heading`, `text-subheading`, `text-body-lg`, `text-body`, `text-caption`, `text-label`.
+
+-   **Spacing**: Always use the predefined spacing scale for `margin`, `padding`, and `gap`. The scale is based on a 4px grid.
+    -   `p-1` (4px), `p-2` (8px), `p-3` (12px), `p-4` (16px), etc.
+    -   Includes aliases: `p-container` (16px) and `p-gutter` (24px).
+
+-   **Border Radius**: Always use the predefined border radius classes to maintain a consistent, rounded aesthetic.
+    -   `rounded-sm` (4px)
+    -   `rounded-md` (8px)
+    -   `rounded-lg` (12px)
+    -   `rounded-xl` (16px)
+    -   `rounded-2xl` (24px)
+    -   `rounded-full` (9999px)
+    -   **Default for most elements (like buttons and cards) should be `rounded-lg`**.
 
 ### Use ':dark'
 
