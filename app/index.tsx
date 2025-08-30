@@ -5,7 +5,6 @@ import { Feather } from '@expo/vector-icons';
 import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
-import { DrawerNavigationProp } from '@react-navigation/drawer';
 import * as Clipboard from 'expo-clipboard';
 import { useNavigation } from 'expo-router';
 import { useUnstableNativeVariable } from 'nativewind';
@@ -16,13 +15,16 @@ import { TypingIndicator } from '@/components/TypingIndicator';
 import { Button } from '@/components/nativewindui/Button';
 import { Text } from '@/components/nativewindui/Text';
 import { TextInput } from '@/components/TextInput';
+import { cn } from '@/lib/cn';
 import useAppStatusStore from '@/store/appStatusStore';
 import useChatStore from '@/store/chatStore';
 import useDbStore from '@/store/dbStore';
 import useModelStore from '@/store/modelStore';
 import useSessionStore from '@/store/sessionStore';
-import { ActivityIndicator, FlatList, KeyboardAvoidingView, Platform, Pressable, View } from 'react-native';
-import Animated, { useAnimatedStyle } from 'react-native-reanimated';
+import { DrawerNavigationProp } from '@react-navigation/drawer';
+import { ActivityIndicator, FlatList, Pressable, View } from 'react-native';
+import { useKeyboardHandler } from 'react-native-keyboard-controller';
+import Animated, { useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -33,6 +35,21 @@ type RootDrawerParamList = {
 };
 
 type ChatScreenNavigationProp = DrawerNavigationProp<RootDrawerParamList, 'index'>;
+
+const useGradualAnimation = () => {
+  const height = useSharedValue(0);
+
+  useKeyboardHandler(
+    {
+      onMove: event => {
+        'worklet';
+        height.value = event.height;
+      },
+    },
+    []
+  );
+  return height;
+};
 
 export default function ChatScreen() {
   const { activeModel, setActiveModel } = useChatStore();
@@ -52,10 +69,18 @@ export default function ChatScreen() {
 
   const bottomSheetRef = useRef<BottomSheetModal>(null);
 
-  const animatedStyle = useAnimatedStyle(() => {
+  const keyboardHeight = useGradualAnimation();
+
+  const animatedDrawerStyle = useAnimatedStyle(() => {
     const translateX = drawerProgress.value * 250;
     return {
       transform: [{ translateX }],
+    };
+  });
+
+  const animatedKeyboardSpacerStyle = useAnimatedStyle(() => {
+    return {
+      height: keyboardHeight.value,
     };
   });
 
@@ -168,7 +193,10 @@ export default function ChatScreen() {
     setAppStatus('IDLE');
   };
   const foreground = useUnstableNativeVariable('--foreground');
+  const primaryForeground = useUnstableNativeVariable('--primary-foreground');
+  const mutedForeground = useUnstableNativeVariable('--muted-foreground');
 
+  const isSendDisabled = appStatus !== 'IDLE' || !isModelLoaded || !inputText.trim();
 
   const renderContent = () => {
     if (!modelState || modelState.status === 'not_downloaded') {
@@ -188,45 +216,66 @@ export default function ChatScreen() {
     }
 
     return (
-      <>
-        <FlatList
-          ref={flatListRef}
-          data={messages}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => (
-            <Pressable
-              onLongPress={() => Clipboard.setStringAsync(item.content)}
-              className={`p-3 rounded-lg mb-2 max-w-[80%] ${
-                item.role === 'user' ? 'self-end bg-primary' : 'self-start bg-card'
-              }`}
+      <FlatList
+        ref={flatListRef}
+        data={messages}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => (
+          <Pressable
+            onLongPress={() => Clipboard.setStringAsync(item.content)}
+            className={`p-3 rounded-lg mb-2 max-w-[80%] ${
+              item.role === 'user' ? 'self-end bg-primary' : 'self-start bg-card'
+            }`}
+          >
+            <Text
+              className={
+                item.role === 'user' ? 'text-primary-foreground' : 'text-card-foreground'
+              }
             >
-              <Text
-                className={
-                  item.role === 'user' ? 'text-primary-foreground' : 'text-card-foreground'
-                }
-              >
-                {item.content}
-              </Text>
-              {item.role === 'model' && (
-                <View className="mt-2">
-                  {item.modelName && (
-                    <Text className="text-caption text-muted-foreground">
-                      Model: {item.modelName}
-                    </Text>
-                  )}
-                  {item.generationTimeMs && (
-                    <Text className="text-caption text-muted-foreground">
-                      Generated in {(item.generationTimeMs / 1000).toFixed(2)}s
-                    </Text>
-                  )}
-                </View>
-              )}
-            </Pressable>
-          )}
-          className="flex-1 w-full p-2"
-          contentContainerStyle={{ paddingBottom: 16 }}
-          ListFooterComponent={appStatus === 'GENERATING' ? <TypingIndicator /> : null}
-        />
+              {item.content}
+            </Text>
+            {item.role === 'model' && (
+              <View className="mt-2">
+                {item.modelName && (
+                  <Text className="text-caption text-muted-foreground">
+                    Model: {item.modelName}
+                  </Text>
+                )}
+                {item.generationTimeMs && (
+                  <Text className="text-caption text-muted-foreground">
+                    Generated in {(item.generationTimeMs / 1000).toFixed(2)}s
+                  </Text>
+                )}
+              </View>
+            )}
+          </Pressable>
+        )}
+        className="flex-1 w-full p-2"
+        contentContainerStyle={{ paddingBottom: 16 }}
+        ListFooterComponent={appStatus === 'GENERATING' ? <TypingIndicator /> : null}
+      />
+    );
+  };
+
+  return (
+    <>
+      <Animated.View
+        className="flex-1 overflow-hidden bg-background"
+        style={animatedDrawerStyle}
+      >
+        <View
+          className="px-2 flex-row justify-between items-center"
+          style={{ paddingTop: insets.top }}
+        >
+          <Button className="gap-2" variant="ghost" onPress={() => navigation.openDrawer()}>
+            <Feather color={foreground} name="menu" size={24} />
+          </Button>
+            <Text className="text-foreground">A5.local</Text>
+          <Button variant="ghost" onPress={handlePresentModalPress}>
+            <FontAwesome5 name="brain" size={24} color={foreground} />
+          </Button>
+        </View>
+        <View className="flex-1">{renderContent()}</View>
         {appStatus === 'LOADING_MODEL' && (
           <ActivityIndicator size="large" className="my-2.5 text-primary" />
         )}
@@ -240,9 +289,7 @@ export default function ChatScreen() {
         )}
         <View
           className="flex-col gap-2 p-2 border-t border-border"
-          style={{
-            paddingBottom: insets.bottom + 8,
-          }}
+          style={{ paddingBottom: insets.bottom }}
         >
           <View className="flex-row gap-2 items-center w-full">
             <TextInput
@@ -261,45 +308,19 @@ export default function ChatScreen() {
             />
             <Button
               onPress={handleSend}
-              disabled={appStatus !== 'IDLE' || !isModelLoaded || !inputText.trim()}
+              disabled={isSendDisabled}
               size="icon"
-              className="bg-background text-foreground"
+              className={cn(isSendDisabled ? 'bg-muted' : 'bg-primary')}
             >
-              <MaterialIcons color={foreground} name="send" size={24} />
+              <MaterialIcons name="send" size={24} color={isSendDisabled ? mutedForeground : primaryForeground} />
             </Button>
           </View>
         </View>
-      </>
-    );
-  };
-
-  return (
-    <KeyboardAvoidingView
-      className="flex-1"
-      behavior={Platform.OS === 'ios' ? 'padding' : 'padding'}
-      keyboardVerticalOffset={40}
-    >
-      <Animated.View
-        className="flex-1 overflow-hidden bg-background"
-        style={animatedStyle}
-      >
-        <View
-          className="px-2 flex-row justify-between items-center"
-          style={{ paddingTop: insets.top }}
-        >
-          <Button className="gap-2" variant="ghost" onPress={() => navigation.openDrawer()}>
-            <Feather color={foreground} name="menu" size={24} />
-          </Button>
-            <Text className="text-foreground">A5.local</Text>
-          <Button variant="ghost" onPress={handlePresentModalPress}>
-            <FontAwesome5 name="brain" size={24} color={foreground} />
-          </Button>
-        </View>
-        <View className="flex-1">{renderContent()}</View>
+        <Animated.View style={animatedKeyboardSpacerStyle} />
       </Animated.View>
       <CustomBottomSheet ref={bottomSheetRef}>
         <ModelManagement />
       </CustomBottomSheet>
-    </KeyboardAvoidingView>
+    </>
   );
 }

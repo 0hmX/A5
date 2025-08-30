@@ -1,5 +1,5 @@
 ### Performance
-- Fix input area lag/performance issues
+- Fix input area lag/performance issues in index.tsx; its inconsistent
 
 ### Benchmark Feature
 - Add model performance benchmarking
