@@ -281,7 +281,7 @@ export default function ChatScreen() {
           <Button className="gap-2" variant="ghost" onPress={() => navigation.openDrawer()}>
             <Feather color={foreground} name="menu" size={24} />
           </Button>
-            <Text className="text-foreground">A5.local</Text>
+            <Text className="text-foreground">A5 {"dot"} local</Text>
           <Button variant="ghost" onPress={handlePresentModalPress}>
             <FontAwesome5 name="brain" size={24} color={foreground} />
           </Button>
