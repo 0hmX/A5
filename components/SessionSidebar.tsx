@@ -44,7 +44,7 @@ export function SessionSidebar(props: DrawerContentComponentProps) {
           </Pressable>
         </View>
         <Button onPress={() => { }} variant="secondary">
-          <Text>Benchmark</Text>
+          <Text className="text-primary-foreground">Benchmark</Text>
         </Button>
         <View className="flex-1">
           <FlatList
@@ -74,7 +74,7 @@ export function SessionSidebar(props: DrawerContentComponentProps) {
       </View>
       <View className="pt-4">
         <Button onPress={() => { }} variant="secondary">
-          <Text>Settings</Text>
+          <Text className='text-primary-foreground'>Settings</Text>
         </Button>
       </View>
     </View>
