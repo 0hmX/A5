@@ -1,5 +1,3 @@
-### The sidebar is pinning sessing below safearea
-
 ### Sidebar style really sucks;
 - remove the date and time in session cards;
 - make them minimal;

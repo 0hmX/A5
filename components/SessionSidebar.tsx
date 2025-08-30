@@ -1,6 +1,7 @@
 import useSessionStore from '@/store/sessionStore';
 import { DrawerContentComponentProps, DrawerNavigationProp } from '@react-navigation/drawer';
 import { FlatList, Pressable, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button } from './nativewindui/Button';
 import { TextInput } from './TextInput';
 
@@ -13,6 +14,7 @@ type SessionSidebarNavigationProp = DrawerNavigationProp<RootDrawerParamList, 'i
 export function SessionSidebar(props: DrawerContentComponentProps) {
   const { sessions, activeSessionId, setActiveSession, createNewSession } = useSessionStore();
   const { navigation } = props;
+  const insets = useSafeAreaInsets();
 
   const handleSessionSelect = (sessionId: string) => {
     setActiveSession(sessionId);
@@ -27,7 +29,10 @@ export function SessionSidebar(props: DrawerContentComponentProps) {
   };
 
   return (
-    <View className="flex-1 pt-[50px] p-container justify-between">
+    <View
+      className="flex-1 p-container justify-between"
+      style={{ paddingTop: insets.top, paddingBottom: insets.bottom }}
+    >
       <View className="flex-1 space-y-4 gap-2">
         <View className="flex-row items-center gap-2">
           <TextInput placeholder='Search' variant={"default"} size={"md"} containerClassName='mb-0 flex-1' className='flex-1' showClear={false} />
@@ -59,15 +64,6 @@ export function SessionSidebar(props: DrawerContentComponentProps) {
                   }
                 >
                   {item.name}
-                </Text>
-                <Text
-                  className={
-                    activeSessionId === item.id
-                      ? 'text-accent-foreground/70'
-                      : 'text-muted-foreground'
-                  }
-                >
-                  {new Date(item.createdAt).toLocaleString()}
                 </Text>
               </Pressable>
             )}
